@@ -246,47 +246,57 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function EnvelopeReferenceBlock() {
+function EnvelopeReference({
+  fill,
+}: {
+  fill: string;
+}) {
   return (
-    <div className="tm-reference">
-      <div className="tm-ref-photo">
-        <svg viewBox="0 0 420 320" className="tm-ref-svg" role="img">
-          <rect width="420" height="320" fill="#f4f4f4" />
-          <circle cx="42" cy="42" r="26" fill="#d7d7d7" opacity="0.8" />
-          <rect x="24" y="170" width="250" height="115" rx="10" fill="#c51d85" />
-          <polygon points="24,170 149,82 274,170" fill="#d22a90" />
-          <polygon points="40,176 145,176 149,176 254,176 149,106" fill="#42c8f5" />
-          <rect x="234" y="175" width="130" height="95" rx="8" fill="#14aee6" />
-          <polygon points="234,175 299,225 364,175" fill="#1bb5ed" />
-          <path d="M234 175 L299 225 L364 175" fill="none" stroke="#0d89b4" strokeWidth="3" />
+    <div className="ref-card">
+      <div className="ref-photo">
+        <svg viewBox="0 0 420 300" className="ref-svg" role="img">
+          <rect width="420" height="300" fill="#efefef" />
+          <circle cx="36" cy="36" r="22" fill="#d9d9d9" />
+          <g transform="translate(40 50)">
+            <polygon points="0,92 128,0 256,92 256,212 0,212" fill="#cf1889" />
+            <polygon points="0,92 128,92 256,92 128,34" fill="#53d8ff" />
+            <polygon points="0,92 128,162 256,92 256,212 0,212" fill="none" stroke="#be167e" strokeWidth="1.5" opacity="0.28" />
+          </g>
+          <g transform="translate(215 120)">
+            <rect x="0" y="0" width="145" height="110" rx="6" fill="#12b3eb" />
+            <polygon points="0,0 72.5,54 145,0" fill="#18bff6" />
+            <line x1="0" y1="110" x2="72.5" y2="54" stroke="#0e95c2" strokeWidth="2.3" opacity="0.6" />
+            <line x1="145" y1="110" x2="72.5" y2="54" stroke="#0e95c2" strokeWidth="2.3" opacity="0.6" />
+          </g>
         </svg>
       </div>
 
-      <div className="tm-ref-diagram">
-        <svg viewBox="0 0 420 255" className="tm-ref-svg" role="img">
-          <rect width="420" height="255" fill="#59b2c0" />
-          <polygon points="120,165 260,95 345,155 172,222" fill="#a57cc2" opacity="0.92" />
-          <polygon points="52,140 120,165 172,222 101,214" fill="#8b668f" opacity="0.95" />
-          <polygon points="120,165 260,95 259,113 139,174" fill="#b78bd1" />
-          <text x="84" y="69" fill="#ffffff" fontSize="16" fontWeight="700">
-            Overlap
-          </text>
-          <text x="26" y="213" fill="#ffffff" fontSize="18" fontWeight="700">
-            Height
-          </text>
-          <text x="147" y="220" fill="#ffffff" fontSize="20" fontWeight="700">
-            Width
-          </text>
-          <line x1="100" y1="82" x2="100" y2="114" stroke="#ffffff" strokeWidth="2" />
-          <line x1="90" y1="82" x2="110" y2="82" stroke="#ffffff" strokeWidth="2" />
-          <line x1="90" y1="114" x2="110" y2="114" stroke="#ffffff" strokeWidth="2" />
+      <div className="ref-diagram">
+        <svg viewBox="0 0 420 250" className="ref-svg" role="img">
+          <rect width="420" height="250" fill="#58aebe" />
+          <g transform="translate(28 20)">
+            <polygon points="0,135 120,95 270,140 115,205" fill="#9f7bc0" />
+            <polygon points="12,122 0,135 115,205 145,180" fill="#876698" />
+            <polygon points="120,95 150,79 292,126 270,140" fill="#b88ad4" />
+            <text x="124" y="42" fill="#ffffff" fontSize="20" fontWeight="700">Overlap</text>
+            <text x="0" y="165" fill="#ffffff" fontSize="20" fontWeight="700">Height</text>
+            <text x="149" y="192" fill="#ffffff" fontSize="20" fontWeight="700">Width</text>
+            <line x1="196" y1="54" x2="196" y2="85" stroke="#ffffff" strokeWidth="2.5" />
+            <line x1="188" y1="54" x2="204" y2="54" stroke="#ffffff" strokeWidth="2.5" />
+            <line x1="188" y1="85" x2="204" y2="85" stroke="#ffffff" strokeWidth="2.5" />
+          </g>
         </svg>
+      </div>
+
+      <div className="ref-chip">
+        <span>Preview fill</span>
+        <div className="ref-chip-color" style={{ background: fill }} />
       </div>
     </div>
   );
 }
 
-function EnvelopeDieline({
+function EnvelopeWorkArea({
   width,
   height,
   overlap,
@@ -299,183 +309,133 @@ function EnvelopeDieline({
   radius: number;
   fill: string;
 }) {
-  const W = clamp(width, 80, 260);
-  const H = clamp(height, 50, 180);
-  const O = clamp(overlap, 6, W * 0.12);
+  const W = clamp(width, 90, 260);
+  const H = clamp(height, 60, 180);
+  const O = clamp(overlap, 4, W * 0.12);
   const R = clamp(radius, 0, 14);
 
-  const bodyX = 155;
-  const bodyY = 88;
+  const bodyX = 220;
+  const bodyY = 120;
   const bodyW = W;
   const bodyH = H;
 
-  const leftA = { x: bodyX, y: bodyY };
-  const leftB = { x: bodyX - H * 0.36, y: bodyY + bodyH / 2 };
-  const leftC = { x: bodyX, y: bodyY + bodyH };
+  const leftTop = { x: bodyX, y: bodyY };
+  const leftKink = { x: bodyX - H * 0.12, y: bodyY + bodyH * 0.6 };
+  const leftBottom = { x: bodyX - H * 0.34, y: bodyY + bodyH + H * 0.52 };
+  const leftBottomInner = { x: bodyX + O, y: bodyY + bodyH + H * 0.52 };
 
-  const rightA = { x: bodyX + bodyW, y: bodyY };
-  const rightB = { x: bodyX + bodyW + H * 0.36, y: bodyY + bodyH / 2 };
-  const rightC = { x: bodyX + bodyW, y: bodyY + bodyH };
+  const bottomRightInner = { x: bodyX + bodyW - O, y: bodyY + bodyH + H * 0.52 };
+  const bottomRight = { x: bodyX + bodyW + H * 0.12, y: bodyY + bodyH + H * 0.52 };
 
-  const topA = { x: bodyX + O, y: bodyY };
-  const topB = { x: bodyX + bodyW / 2, y: bodyY - H * 0.48 };
-  const topC = { x: bodyX + bodyW - O, y: bodyY };
+  const rightKink = { x: bodyX + bodyW + H * 0.22, y: bodyY + bodyH * 0.62 };
+  const rightTop = { x: bodyX + bodyW + H * 0.46, y: bodyY + H * 0.04 };
 
-  const bottomA = { x: bodyX + O, y: bodyY + bodyH };
-  const bottomB = { x: bodyX + bodyW / 2, y: bodyY + bodyH + H * 0.34 };
-  const bottomC = { x: bodyX + bodyW - O, y: bodyY + bodyH };
+  const topRightInner = { x: bodyX + bodyW - O, y: bodyY };
+  const topLeftInner = { x: bodyX + O, y: bodyY };
 
-  const viewW = bodyX + bodyW + H * 0.5 + 80;
-  const viewH = bodyY + bodyH + H * 0.46 + 70;
+  const guide1A = { x: bodyX, y: bodyY + bodyH * 0.58 };
+  const guide1B = { x: bodyX + bodyW * 0.72, y: bodyY };
+  const guide2A = { x: bodyX + bodyW * 0.16, y: bodyY + bodyH + H * 0.52 };
+  const guide2B = { x: bodyX + bodyW * 0.88, y: bodyY + bodyH * 0.6 };
+
+  const viewW = bodyX + bodyW + H * 0.75 + 120;
+  const viewH = bodyY + bodyH + H * 0.9 + 100;
 
   return (
-    <div className="tm-dieline-wrap">
-      <svg viewBox={`0 0 ${viewW} ${viewH}`} className="tm-dieline-svg" role="img">
+    <div className="workarea-card">
+      <svg viewBox={`0 0 ${viewW} ${viewH}`} className="workarea-svg" role="img">
         <rect width={viewW} height={viewH} fill="#ffffff" />
-        <rect x="12" y="12" width={viewW - 24} height={viewH - 24} fill="none" stroke="#d4d4d4" />
-        <text x="26" y="34" fontSize="12" fill="#222">
+        <rect x="20" y="20" width={viewW - 40} height={viewH - 40} fill="none" stroke="#d4d4d4" />
+        <text x="44" y="46" fontSize="16" fill="#222">
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
         <path
-          d={`M ${topA.x} ${topA.y} L ${topB.x} ${topB.y} L ${topC.x} ${topC.y}`}
+          d={`
+            M ${topLeftInner.x} ${topLeftInner.y}
+            L ${topRightInner.x} ${topRightInner.y}
+            Q ${bodyX + bodyW + O * 0.6} ${bodyY} ${rightTop.x} ${rightTop.y}
+            L ${rightKink.x} ${rightKink.y}
+            L ${bottomRight.x} ${bottomRight.y}
+            Q ${bodyX + bodyW + O * 0.3} ${bottomRight.y} ${bottomRightInner.x} ${bottomRightInner.y}
+            L ${leftBottomInner.x} ${leftBottomInner.y}
+            Q ${bodyX - O * 0.3} ${bottomRight.y} ${leftBottom.x} ${leftBottom.y}
+            L ${leftKink.x} ${leftKink.y}
+            L ${leftTop.x} ${leftTop.y}
+            Q ${bodyX + O * 0.3} ${bodyY} ${topLeftInner.x} ${topLeftInner.y}
+          `}
           fill="none"
           stroke="#ff1493"
-          strokeWidth="4"
+          strokeWidth="6"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
 
         <path
-          d={`M ${leftA.x} ${leftA.y} L ${leftB.x} ${leftB.y} L ${leftC.x} ${leftC.y}`}
+          d={`
+            M ${bodyX} ${bodyY + bodyH * 0.58}
+            L ${bodyX + bodyW * 0.72} ${bodyY}
+          `}
           fill="none"
-          stroke="#ff1493"
-          strokeWidth="4"
-          strokeLinejoin="round"
-          strokeLinecap="round"
+          stroke="#27b0ff"
+          strokeWidth="3"
         />
 
         <path
-          d={`M ${rightA.x} ${rightA.y} L ${rightB.x} ${rightB.y} L ${rightC.x} ${rightC.y}`}
+          d={`
+            M ${bodyX + bodyW * 0.16} ${bodyY + bodyH + H * 0.52}
+            L ${bodyX + bodyW * 0.88} ${bodyY + bodyH * 0.6}
+          `}
           fill="none"
-          stroke="#ff1493"
-          strokeWidth="4"
-          strokeLinejoin="round"
-          strokeLinecap="round"
+          stroke="#27b0ff"
+          strokeWidth="3"
         />
 
         <path
-          d={`M ${bottomA.x} ${bottomA.y} L ${bottomB.x} ${bottomB.y} L ${bottomC.x} ${bottomC.y}`}
+          d={`
+            M ${bodyX} ${bodyY + bodyH * 0.58}
+            L ${bodyX + bodyW * 0.16} ${bodyY + bodyH + H * 0.52}
+          `}
           fill="none"
-          stroke="#ff1493"
-          strokeWidth="4"
-          strokeLinejoin="round"
-          strokeLinecap="round"
+          stroke="#27b0ff"
+          strokeWidth="3"
+        />
+
+        <path
+          d={`
+            M ${bodyX + bodyW * 0.72} ${bodyY}
+            L ${bodyX + bodyW * 0.88} ${bodyY + bodyH * 0.6}
+          `}
+          fill="none"
+          stroke="#27b0ff"
+          strokeWidth="3"
+        />
+
+        <path
+          d={`
+            M ${bodyX} ${bodyY + bodyH * 0.58}
+            L ${bodyX + bodyW * 0.72} ${bodyY}
+            L ${bodyX + bodyW * 0.88} ${bodyY + bodyH * 0.6}
+            L ${bodyX + bodyW * 0.16} ${bodyY + bodyH + H * 0.52}
+            Z
+          `}
+          fill={fill}
+          opacity="0.08"
+          stroke="none"
         />
 
         <rect
-          x={bodyX}
-          y={bodyY}
-          width={bodyW}
-          height={bodyH}
+          x={bodyX + bodyW * 0.08}
+          y={bodyY + bodyH * 0.18}
+          width={bodyW * 0.62}
+          height={bodyH * 0.36}
           rx={R}
           ry={R}
           fill="none"
-          stroke="#3ab0ff"
-          strokeWidth="2"
-        />
-
-        <line
-          x1={leftB.x}
-          y1={leftB.y}
-          x2={bodyX + bodyW}
-          y2={bodyY}
-          stroke="#3ab0ff"
-          strokeWidth="2"
-        />
-        <line
-          x1={leftB.x}
-          y1={leftB.y}
-          x2={bodyX + bodyW * 0.46}
-          y2={bodyY + bodyH}
-          stroke="#3ab0ff"
-          strokeWidth="2"
-        />
-        <line
-          x1={bodyX}
-          y1={bodyY + bodyH}
-          x2={bodyX + bodyW * 0.46}
-          y2={bodyY + bodyH}
-          stroke="#3ab0ff"
-          strokeWidth="2"
+          stroke="#27b0ff"
+          strokeWidth="0"
         />
       </svg>
-    </div>
-  );
-}
-
-function EnvelopeStudio({
-  width,
-  height,
-  overlap,
-  radius,
-  fill,
-}: {
-  width: number;
-  height: number;
-  overlap: number;
-  radius: number;
-  fill: string;
-}) {
-  return (
-    <div className="tm-studio">
-      <div className="tm-col tm-left">
-        <h3 className="tm-title-big">ENVELOPE</h3>
-        <EnvelopeReferenceBlock />
-      </div>
-
-      <div className="tm-col tm-middle">
-        <div className="tm-section">
-          <h4 className="tm-section-title">Dimensions</h4>
-          <div className="tm-options-row">
-            <label><input type="radio" checked readOnly /> mm</label>
-            <label><input type="radio" readOnly /> cm</label>
-            <label><input type="radio" readOnly /> inch</label>
-          </div>
-
-          <div className="tm-field"><span>Width</span><div className="tm-value">{width}</div></div>
-          <div className="tm-field"><span>Height</span><div className="tm-value">{height}</div></div>
-        </div>
-
-        <div className="tm-section">
-          <h4 className="tm-section-title">Optional parameters</h4>
-          <div className="tm-field"><span>Overlap</span><div className="tm-value">{overlap}</div></div>
-          <div className="tm-field"><span>Rounded Corners Radius</span><div className="tm-value">{radius}</div></div>
-        </div>
-
-        <div className="tm-section">
-          <h4 className="tm-section-title">Document Options</h4>
-          <div className="tm-field"><span>Margin</span><div className="tm-value">25</div></div>
-          <div className="tm-field"><span>Page Size</span><div className="tm-value">Fit page to drawing</div></div>
-          <div className="tm-field"><span>Resolution</span><div className="tm-value">72</div></div>
-          <div className="tm-field"><span>Perforate folds</span><div className="tm-value">5 / 1</div></div>
-        </div>
-
-        <div className="tm-fill-chip">
-          <span>Current fill</span>
-          <div className="tm-fill-color" style={{ background: fill }} />
-        </div>
-      </div>
-
-      <div className="tm-col tm-right">
-        <EnvelopeDieline
-          width={width}
-          height={height}
-          overlap={overlap}
-          radius={radius}
-          fill={fill}
-        />
-      </div>
     </div>
   );
 }
@@ -511,17 +471,17 @@ function PlaceholderPreview({
 }
 
 export default function App() {
-  const [templateId, setTemplateId] = useState<string>("bag");
+  const [templateId, setTemplateId] = useState<string>("envelope");
   const [scale, setScale] = useState<ScaleMode>("1:6");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [exportMode, setExportMode] = useState<ExportMode>("print");
-  const [panelColor, setPanelColor] = useState<string>("#e0b0c6");
+  const [panelColor, setPanelColor] = useState<string>("#d6adc1");
 
-  const [a, setA] = useState<number>(80);
-  const [b, setB] = useState<number>(50);
-  const [c, setC] = useState<number>(150);
-  const [d, setD] = useState<number>(20);
-  const [e, setE] = useState<number>(15);
+  const [a, setA] = useState<number>(150);
+  const [b, setB] = useState<number>(100);
+  const [c, setC] = useState<number>(0);
+  const [d, setD] = useState<number>(0);
+  const [e, setE] = useState<number>(0);
 
   const activeTemplate = useMemo(
     () => templates.find((t) => t.id === templateId) ?? templates[0],
@@ -570,7 +530,7 @@ export default function App() {
   const preview = useMemo(() => {
     if (templateId === "envelope") {
       return (
-        <EnvelopeStudio
+        <EnvelopeWorkArea
           width={a}
           height={b}
           overlap={paramValues.overlap ?? 12.5}
@@ -626,6 +586,13 @@ export default function App() {
             </select>
             <p className="muted">{activeTemplate.description}</p>
           </section>
+
+          {templateId === "envelope" && (
+            <section className="panel">
+              <h2>Reference</h2>
+              <EnvelopeReference fill={panelColor} />
+            </section>
+          )}
 
           <section className="panel">
             <h2>Choose scale</h2>
@@ -726,7 +693,7 @@ export default function App() {
 
         <section className="center-stage">
           <section className="panel">
-            <h2>Live preview</h2>
+            <h2>Work area</h2>
             {preview}
           </section>
         </section>
