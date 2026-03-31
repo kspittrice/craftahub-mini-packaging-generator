@@ -10,6 +10,39 @@ function pt(x: number, y: number): Pt {
   return { x, y };
 }
 
+function add(a: Pt, b: Pt): Pt {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+function sub(a: Pt, b: Pt): Pt {
+  return { x: a.x - b.x, y: a.y - b.y };
+}
+
+function mul(a: Pt, k: number): Pt {
+  return { x: a.x * k, y: a.y * k };
+}
+
+function midpoint(a: Pt, b: Pt): Pt {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function distance(a: Pt, b: Pt): number {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+function normalize(v: Pt): Pt {
+  const len = Math.hypot(v.x, v.y) || 1;
+  return { x: v.x / len, y: v.y / len };
+}
+
+function line(a: Pt, b: Pt) {
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+}
+
+function polyline(points: Pt[]) {
+  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+}
+
 function scaleDivisor(scale: ScaleMode) {
   return scale === "1:6" ? 6 : 12;
 }
@@ -22,12 +55,22 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function line(a: Pt, b: Pt) {
-  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
-}
+function rotatedRectangleFromCenter(
+  center: Pt,
+  width: number,
+  height: number,
+  ux: Pt,
+  uy: Pt
+) {
+  const hx = width / 2;
+  const hy = height / 2;
 
-function polyline(points: Pt[]) {
-  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  const tl = add(center, add(mul(ux, -hx), mul(uy, -hy)));
+  const tr = add(center, add(mul(ux, hx), mul(uy, -hy)));
+  const br = add(center, add(mul(ux, hx), mul(uy, hy)));
+  const bl = add(center, add(mul(ux, -hx), mul(uy, hy)));
+
+  return { tl, tr, br, bl };
 }
 
 function EnvelopeGeometry({
@@ -45,12 +88,10 @@ function EnvelopeGeometry({
   const H = clamp(height, 50, 180);
   const O = clamp(overlap, 0, 30);
 
-  // Reference points taken from the user's provided 150x100 screenshot
-  // and then scaled to current width/height.
+  // Reference coordinates from your preferred version / screenshot
   const refW = 150;
   const refH = 100;
 
-  // Bounding box of the screenshot geometry
   const minX = 231;
   const minY = 279;
   const maxX = 1020;
@@ -66,7 +107,7 @@ function EnvelopeGeometry({
     return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
   }
 
-  // Outer contour, tuned from screenshot
+  // Pink outer contour from the screenshot-based version
   const outer = [
     map(231, 893),
     map(320, 608),
@@ -82,16 +123,41 @@ function EnvelopeGeometry({
     map(509, 893),
   ];
 
-  // Inner blue fold-shape from screenshot
-  const innerLeft = map(320, 608);
-  const innerTop = map(757, 321);
-  const innerRight = map(948, 607);
-  const innerBottom = map(509, 893);
+  // Reference blue shape corners from screenshot
+  // order: left -> top -> right -> bottom
+  const refLeft = pt(320, 608);
+  const refTop = pt(757, 321);
+  const refRight = pt(948, 607);
+  const refBottom = pt(509, 893);
 
-  // Small overlap-dependent adjustment to mimic parameter effect
+  // Build a TRUE rectangle from the reference:
+  // long side follows Left -> Top
+  // short side follows Top -> Right
+  const refLong = distance(refLeft, refTop);
+  const refShort = distance(refTop, refRight);
+
+  const ux = normalize(sub(refTop, refLeft));   // long-side direction
+  const uy = normalize(sub(refRight, refTop));  // short-side direction
+
+  const refCenter = midpoint(refLeft, refRight);
+
+  // Scale center into current viewport
+  const center = map(refCenter.x, refCenter.y);
+
+  // Scale rectangle dimensions independently with Width / Height
+  // so the panel keeps 90° corners but changes size correctly
+  const rectWidth = refLong * sx;
+  const rectHeight = refShort * sy;
+
   const overlapShift = (O - 12.5) * 3;
-  const adjustedTop = pt(innerTop.x - overlapShift, innerTop.y);
-  const adjustedBottom = pt(innerBottom.x + overlapShift * 0.5, innerBottom.y);
+
+  const { tl, tr, br, bl } = rotatedRectangleFromCenter(
+    pt(center.x - overlapShift * 0.35, center.y + overlapShift * 0.15),
+    rectWidth,
+    rectHeight,
+    ux,
+    uy
+  );
 
   const viewW = (maxX - minX) * sx + 360;
   const viewH = (maxY - minY) * sy + 280;
@@ -113,7 +179,6 @@ function EnvelopeGeometry({
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
-        {/* soft editable zone tint */}
         <path
           d={`${polyline([...outer, outer[0]])} Z`}
           fill={fill}
@@ -121,7 +186,6 @@ function EnvelopeGeometry({
           stroke="none"
         />
 
-        {/* outer cut line */}
         <path
           d={`${polyline([...outer, outer[0]])} Z`}
           fill="none"
@@ -131,11 +195,11 @@ function EnvelopeGeometry({
           strokeLinecap="round"
         />
 
-        {/* fold lines */}
-        <path d={line(innerLeft, adjustedTop)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(adjustedTop, innerRight)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(innerRight, adjustedBottom)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(adjustedBottom, innerLeft)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        {/* Blue zone = true rectangle, always 90° */}
+        <path d={line(tl, tr)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(tr, br)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(br, bl)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(bl, tl)} fill="none" stroke="#38aefc" strokeWidth="3" />
       </svg>
     </div>
   );
