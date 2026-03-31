@@ -259,32 +259,48 @@ function EnvelopePreview({
   radius: number;
   fill: string;
 }) {
-  const W = clamp(width, 60, 260);
-  const H = clamp(height, 40, 180);
-  const O = clamp(overlap, 6, W * 0.16);
-  const R = clamp(radius, 0, 16);
+  const W = clamp(width, 80, 260);
+  const H = clamp(height, 50, 180);
+  const O = clamp(overlap, 6, W * 0.12);
+  const R = clamp(radius, 0, 14);
 
-  const margin = 30;
-  const sideDepth = H * 0.42;
-  const topDepth = H * 0.58;
-  const bottomDepth = H * 0.52;
+  const margin = 36;
+  const sideDepth = W * 0.22;
+  const topDepth = H * 0.48;
+  const bottomDepth = H * 0.34;
 
   const bodyX = margin + sideDepth;
   const bodyY = margin + topDepth;
   const bodyW = W;
   const bodyH = H;
 
-  const leftTipX = bodyX - sideDepth;
-  const leftTipY = bodyY + bodyH / 2;
+  const leftTopX = bodyX;
+  const leftTopY = bodyY;
+  const leftMidX = bodyX - sideDepth;
+  const leftMidY = bodyY + bodyH / 2;
+  const leftBottomX = bodyX;
+  const leftBottomY = bodyY + bodyH;
 
-  const rightTipX = bodyX + bodyW + sideDepth;
-  const rightTipY = bodyY + bodyH / 2;
+  const rightTopX = bodyX + bodyW;
+  const rightTopY = bodyY;
+  const rightMidX = bodyX + bodyW + sideDepth;
+  const rightMidY = bodyY + bodyH / 2;
+  const rightBottomX = bodyX + bodyW;
+  const rightBottomY = bodyY + bodyH;
 
-  const topTipX = bodyX + bodyW / 2;
-  const topTipY = bodyY - topDepth;
+  const topLeftX = bodyX;
+  const topLeftY = bodyY;
+  const topPeakX = bodyX + bodyW / 2;
+  const topPeakY = bodyY - topDepth;
+  const topRightX = bodyX + bodyW;
+  const topRightY = bodyY;
 
-  const bottomTipX = bodyX + bodyW / 2;
-  const bottomTipY = bodyY + bodyH + bottomDepth;
+  const bottomLeftX = bodyX;
+  const bottomLeftY = bodyY + bodyH;
+  const bottomPeakX = bodyX + bodyW / 2;
+  const bottomPeakY = bodyY + bodyH + bottomDepth;
+  const bottomRightX = bodyX + bodyW;
+  const bottomRightY = bodyY + bodyH;
 
   const viewWidth = bodyX + bodyW + sideDepth + margin;
   const viewHeight = bodyY + bodyH + bottomDepth + margin;
@@ -298,52 +314,35 @@ function EnvelopePreview({
       >
         <rect x="0" y="0" width={viewWidth} height={viewHeight} fill="#ffffff" />
 
-        <path
-          d={`
-            M ${bodyX} ${bodyY}
-            L ${leftTipX} ${leftTipY}
-            L ${bodyX} ${bodyY + bodyH}
-            Z
+        <polygon
+          points={`${leftTopX},${leftTopY} ${leftMidX},${leftMidY} ${leftBottomX},${leftBottomY}`}
+          fill={fill}
+          stroke="#ff1493"
+          strokeWidth="2.5"
+        />
+
+        <polygon
+          points={`${rightTopX},${rightTopY} ${rightMidX},${rightMidY} ${rightBottomX},${rightBottomY}`}
+          fill={fill}
+          stroke="#ff1493"
+          strokeWidth="2.5"
+        />
+
+        <polygon
+          points={`
+            ${topLeftX},${topLeftY}
+            ${bodyX + O},${bodyY}
+            ${topPeakX},${topPeakY}
+            ${bodyX + bodyW - O},${bodyY}
+            ${topRightX},${topRightY}
           `}
           fill={fill}
           stroke="#ff1493"
           strokeWidth="2.5"
         />
 
-        <path
-          d={`
-            M ${bodyX + bodyW} ${bodyY}
-            L ${rightTipX} ${rightTipY}
-            L ${bodyX + bodyW} ${bodyY + bodyH}
-            Z
-          `}
-          fill={fill}
-          stroke="#ff1493"
-          strokeWidth="2.5"
-        />
-
-        <path
-          d={`
-            M ${bodyX} ${bodyY}
-            L ${topTipX} ${topTipY}
-            L ${bodyX + bodyW} ${bodyY}
-            L ${bodyX + bodyW - O} ${bodyY}
-            L ${topTipX} ${bodyY - O}
-            L ${bodyX + O} ${bodyY}
-            Z
-          `}
-          fill={fill}
-          stroke="#ff1493"
-          strokeWidth="2.5"
-        />
-
-        <path
-          d={`
-            M ${bodyX} ${bodyY + bodyH}
-            L ${bottomTipX} ${bottomTipY}
-            L ${bodyX + bodyW} ${bodyY + bodyH}
-            Z
-          `}
+        <polygon
+          points={`${bottomLeftX},${bottomLeftY} ${bottomPeakX},${bottomPeakY} ${bottomRightX},${bottomRightY}`}
           fill={fill}
           stroke="#ff1493"
           strokeWidth="2.5"
@@ -362,78 +361,78 @@ function EnvelopePreview({
         />
 
         <line
-          x1={bodyX}
-          y1={bodyY}
-          x2={leftTipX}
-          y2={leftTipY}
+          x1={leftTopX}
+          y1={leftTopY}
+          x2={leftMidX}
+          y2={leftMidY}
           stroke="#36a3ff"
-          strokeWidth="1.6"
+          strokeWidth="1.5"
           strokeDasharray="5 4"
         />
         <line
-          x1={bodyX}
-          y1={bodyY + bodyH}
-          x2={leftTipX}
-          y2={leftTipY}
+          x1={leftBottomX}
+          y1={leftBottomY}
+          x2={leftMidX}
+          y2={leftMidY}
           stroke="#36a3ff"
-          strokeWidth="1.6"
-          strokeDasharray="5 4"
-        />
-
-        <line
-          x1={bodyX + bodyW}
-          y1={bodyY}
-          x2={rightTipX}
-          y2={rightTipY}
-          stroke="#36a3ff"
-          strokeWidth="1.6"
-          strokeDasharray="5 4"
-        />
-        <line
-          x1={bodyX + bodyW}
-          y1={bodyY + bodyH}
-          x2={rightTipX}
-          y2={rightTipY}
-          stroke="#36a3ff"
-          strokeWidth="1.6"
+          strokeWidth="1.5"
           strokeDasharray="5 4"
         />
 
         <line
-          x1={bodyX}
-          y1={bodyY}
-          x2={topTipX}
-          y2={topTipY}
+          x1={rightTopX}
+          y1={rightTopY}
+          x2={rightMidX}
+          y2={rightMidY}
           stroke="#36a3ff"
-          strokeWidth="1.6"
+          strokeWidth="1.5"
           strokeDasharray="5 4"
         />
         <line
-          x1={bodyX + bodyW}
-          y1={bodyY}
-          x2={topTipX}
-          y2={topTipY}
+          x1={rightBottomX}
+          y1={rightBottomY}
+          x2={rightMidX}
+          y2={rightMidY}
           stroke="#36a3ff"
-          strokeWidth="1.6"
+          strokeWidth="1.5"
           strokeDasharray="5 4"
         />
 
         <line
-          x1={bodyX}
-          y1={bodyY + bodyH}
-          x2={bottomTipX}
-          y2={bottomTipY}
+          x1={topLeftX}
+          y1={topLeftY}
+          x2={topPeakX}
+          y2={topPeakY}
           stroke="#36a3ff"
-          strokeWidth="1.6"
+          strokeWidth="1.5"
           strokeDasharray="5 4"
         />
         <line
-          x1={bodyX + bodyW}
-          y1={bodyY + bodyH}
-          x2={bottomTipX}
-          y2={bottomTipY}
+          x1={topRightX}
+          y1={topRightY}
+          x2={topPeakX}
+          y2={topPeakY}
           stroke="#36a3ff"
-          strokeWidth="1.6"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+
+        <line
+          x1={bottomLeftX}
+          y1={bottomLeftY}
+          x2={bottomPeakX}
+          y2={bottomPeakY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bottomRightX}
+          y1={bottomRightY}
+          x2={bottomPeakX}
+          y2={bottomPeakY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
           strokeDasharray="5 4"
         />
 
@@ -443,7 +442,7 @@ function EnvelopePreview({
           x2={bodyX + bodyW}
           y2={bodyY + bodyH}
           stroke="#36a3ff"
-          strokeWidth="1.3"
+          strokeWidth="1.2"
         />
         <line
           x1={bodyX + bodyW}
@@ -451,7 +450,7 @@ function EnvelopePreview({
           x2={bodyX}
           y2={bodyY + bodyH}
           stroke="#36a3ff"
-          strokeWidth="1.3"
+          strokeWidth="1.2"
         />
 
         <text x="20" y="24" fontSize="15" fill="#111">
