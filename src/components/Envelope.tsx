@@ -11,16 +11,53 @@ interface EnvelopeProps {
   color: string;
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
 function pt(x: number, y: number): Pt {
   return { x, y };
 }
 
+function add(a: Pt, b: Pt): Pt {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+function sub(a: Pt, b: Pt): Pt {
+  return { x: a.x - b.x, y: a.y - b.y };
+}
+
+function mul(v: Pt, k: number): Pt {
+  return { x: v.x * k, y: v.y * k };
+}
+
+function len(v: Pt): number {
+  return Math.hypot(v.x, v.y);
+}
+
+function normalize(v: Pt): Pt {
+  const l = len(v) || 1;
+  return { x: v.x / l, y: v.y / l };
+}
+
+function perp(v: Pt): Pt {
+  return { x: -v.y, y: v.x };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function line(a: Pt, b: Pt) {
   return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+}
+
+function rotatedRectangle(center: Pt, ux: Pt, uy: Pt, longSide: number, shortSide: number) {
+  const hx = longSide / 2;
+  const hy = shortSide / 2;
+
+  return {
+    tl: add(center, add(mul(ux, -hx), mul(uy, -hy))),
+    tr: add(center, add(mul(ux, hx), mul(uy, -hy))),
+    br: add(center, add(mul(ux, hx), mul(uy, hy))),
+    bl: add(center, add(mul(ux, -hx), mul(uy, hy))),
+  };
 }
 
 export const Envelope: React.FC<EnvelopeProps> = ({
@@ -31,124 +68,124 @@ export const Envelope: React.FC<EnvelopeProps> = ({
   scale,
   color,
 }) => {
-  // Build geometry directly in miniature mm
   const k = 1 / scale;
 
-  const w = clamp(width * k, 2, 300);
-  const h = clamp(height * k, 2, 300);
-  const o = clamp(overlap * k, 0, 100);
-  const r = clamp(radius * k, 0, Math.min(w, h) * 0.2);
+  // Final geometry is built directly in miniature mm
+  const miniW = clamp(width * k, 2, 300);
+  const miniH = clamp(height * k, 2, 300);
+  const miniO = clamp(overlap * k, 0, 100);
+  const _miniR = clamp(radius * k, 0, 40);
 
-  // Central panel
-  const x0 = -w / 2;
-  const x1 = w / 2;
-  const y0 = -h / 2;
-  const y1 = h / 2;
+  // Reference PDF is Envelope 150x100 real mm.
+  // We use its vector contour as the base silhouette.
+  const refMiniW = 150 / 6; // 25
+  const refMiniH = 100 / 6; // 16.666...
 
-  // Envelope flap logic
-  // Top flap is the main closing flap
-  const topFlapDepth = h * 0.58 + o;
-  const bottomFlapDepth = h * 0.42;
-  const sideFlapDepth = h * 0.48;
+  const minX = 76.86790466308594;
+  const minY = 70.45611572265625;
+  const maxX = 772.4346923828125;
+  const maxY = 601.1338500976562;
 
-  const topTip = pt(0, y0 - topFlapDepth);
-  const bottomTip = pt(0, y1 + bottomFlapDepth);
-  const leftTip = pt(x0 - sideFlapDepth, 0);
-  const rightTip = pt(x1 + sideFlapDepth, 0);
+  const sx = miniW / refMiniW;
+  const sy = miniH / refMiniH;
 
-  // Slight inset on the base of top/bottom flaps for a cleaner envelope look
-  const topInset = Math.min(w * 0.16, o + w * 0.05);
-  const bottomInset = Math.min(w * 0.12, w * 0.12);
+  const offsetX = 160;
+  const offsetY = 120;
 
-  const topLeftBase = pt(x0 + topInset, y0);
-  const topRightBase = pt(x1 - topInset, y0);
-  const bottomLeftBase = pt(x0 + bottomInset, y1);
-  const bottomRightBase = pt(x1 - bottomInset, y1);
+  function mapPoint(x: number, y: number): Pt {
+    return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
+  }
 
-  // Outer cut contour
-  const cutPath = `
-    M ${topLeftBase.x} ${topLeftBase.y}
-    L ${topTip.x} ${topTip.y}
-    L ${topRightBase.x} ${topRightBase.y}
-    L ${x1} ${y0}
-    L ${rightTip.x} ${rightTip.y}
-    L ${x1} ${y1}
-    L ${bottomRightBase.x} ${bottomRightBase.y}
-    L ${bottomTip.x} ${bottomTip.y}
-    L ${bottomLeftBase.x} ${bottomLeftBase.y}
-    L ${x0} ${y1}
-    L ${leftTip.x} ${leftTip.y}
-    L ${x0} ${y0}
-    Z
-  `;
+  // Exact vector contour commands extracted from the uploaded PDF
+  const cutSegments = [
+    ["l", [326.3776550292969, 571.6517333984375], [346.0323791503906, 601.1338500976562]],
+    ["l", [346.0323791503906, 601.1338500976562], [588.3155517578125, 601.1338500976562]],
+    ["c", [588.3155517578125, 601.1338500976562], [596.3259887695312, 601.1338500976562], [603.55078125, 596.3173217773438], [606.6317138671875, 588.923095703125]],
+    ["l", [606.6317138671875, 588.923095703125], [699.8175659179688, 365.2770690917969]],
+    ["l", [699.8175659179688, 365.2770690917969], [680.162841796875, 335.79498291015625]],
+    ["l", [680.162841796875, 335.79498291015625], [766.9888916015625, 127.4124755859375]],
+    ["c", [766.9888916015625, 127.4124755859375], [772.4346923828125, 114.34246826171875], [762.8319091796875, 99.938232421875], [748.6726684570312, 99.938232421875]],
+    ["l", [748.6726684570312, 99.938232421875], [522.9249877929688, 99.938232421875]],
+    ["l", [522.9249877929688, 99.938232421875], [503.2702331542969, 70.45611572265625]],
+    ["l", [503.2702331542969, 70.45611572265625], [260.987060546875, 70.45611572265625]],
+    ["c", [260.987060546875, 70.45611572265625], [252.97662353515625, 70.45611572265625], [245.7518310546875, 75.27264404296875], [242.6708984375, 82.6668701171875]],
+    ["l", [242.6708984375, 82.6668701171875], [149.4850616455078, 306.3128967285156]],
+    ["l", [149.4850616455078, 306.3128967285156], [169.13980102539062, 335.79498291015625]],
+    ["l", [169.13980102539062, 335.79498291015625], [82.31375122070312, 544.177490234375]],
+    ["c", [82.31375122070312, 544.177490234375], [76.86790466308594, 557.24755859375], [86.4707260131836, 571.6517333984375], [100.62992095947266, 571.6517333984375]],
+    ["l", [100.62992095947266, 571.6517333984375], [326.3776550292969, 571.6517333984375]],
+  ] as const;
 
-  // Fold lines:
-  // 1. central rectangle
-  // 2. diagonals from panel corners to flap tips
-  const foldPath = `
-    ${line(pt(x0, y0), pt(x1, y0))}
-    ${line(pt(x1, y0), pt(x1, y1))}
-    ${line(pt(x1, y1), pt(x0, y1))}
-    ${line(pt(x0, y1), pt(x0, y0))}
+  // Build exact pink path from extracted vector commands
+  let cutPath = "";
+  for (let i = 0; i < cutSegments.length; i++) {
+    const seg = cutSegments[i];
+    if (seg[0] === "l") {
+      const [, p0, p1] = seg;
+      const a = mapPoint(p0[0], p0[1]);
+      const b = mapPoint(p1[0], p1[1]);
+      if (i === 0) {
+        cutPath += `M ${a.x} ${a.y} `;
+      }
+      cutPath += `L ${b.x} ${b.y} `;
+    } else {
+      const [, p0, c1, c2, p3] = seg;
+      const a = mapPoint(p0[0], p0[1]);
+      const b = mapPoint(c1[0], c1[1]);
+      const c = mapPoint(c2[0], c2[1]);
+      const d = mapPoint(p3[0], p3[1]);
+      if (i === 0) {
+        cutPath += `M ${a.x} ${a.y} `;
+      }
+      cutPath += `C ${b.x} ${b.y}, ${c.x} ${c.y}, ${d.x} ${d.y} `;
+    }
+  }
+  cutPath += "Z";
 
-    ${line(pt(x0, y0), leftTip)}
-    ${line(pt(x0, y1), leftTip)}
+  // Exact blue quad from the uploaded PDF
+  const refTop = pt(522.9249877929688, 99.938232421875);
+  const refRight = pt(680.162841796875, 335.79498291015625);
+  const refBottom = pt(326.3776550292969, 571.6517333984375);
+  const refLeft = pt(169.13980102539062, 335.79498291015625);
 
-    ${line(pt(x1, y0), rightTip)}
-    ${line(pt(x1, y1), rightTip)}
+  // Orientation from PDF
+  const ux = normalize(sub(refLeft, refTop));   // long direction
+  const uy = normalize(sub(refRight, refTop));  // short direction
 
-    ${line(topLeftBase, topTip)}
-    ${line(topRightBase, topTip)}
+  const refLong = len(sub(refLeft, refTop));
+  const refShort = len(sub(refRight, refTop));
 
-    ${line(bottomLeftBase, bottomTip)}
-    ${line(bottomRightBase, bottomTip)}
-  `;
+  const centerRef = pt(
+    (refTop.x + refRight.x + refBottom.x + refLeft.x) / 4,
+    (refTop.y + refRight.y + refBottom.y + refLeft.y) / 4
+  );
 
-  // Optional visible blue panel fill
-  const panelFillPath = `
-    M ${x0} ${y0}
-    L ${x1} ${y0}
-    L ${x1} ${y1}
-    L ${x0} ${y1}
-    Z
-  `;
+  const center = mapPoint(centerRef.x, centerRef.y);
 
-  // Dynamic viewBox
-  const margin = Math.max(w, h) * 0.9;
-  const vbX = leftTip.x - margin * 0.35;
-  const vbY = topTip.y - margin * 0.35;
-  const vbW = rightTip.x - leftTip.x + margin * 0.7;
-  const vbH = bottomTip.y - topTip.y + margin * 0.7;
+  const longSide = refLong * (miniW / refMiniW);
+  const shortSide = refShort * (miniH / refMiniH);
+
+  // overlap nudges the blue zone slightly without breaking 90° corners
+  const overlapShift = (miniO - (12.5 / 6)) * 4.0;
+  const shiftedCenter = add(center, mul(ux, -overlapShift));
+
+  const { tl, tr, br, bl } = rotatedRectangle(
+    shiftedCenter,
+    ux,
+    uy,
+    longSide,
+    shortSide
+  );
+
+  const viewW = (maxX - minX) * sx + 320;
+  const viewH = (maxY - minY) * sy + 240;
 
   return (
-    <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} className="w-full h-auto">
-      {/* editable / design zone */}
-      <path d={panelFillPath} fill={color} fillOpacity="0.18" />
+    <svg viewBox={`0 0 ${viewW} ${viewH}`} className="w-full h-auto">
+      <rect width={viewW} height={viewH} fill="#ffffff" />
 
-      {/* optional rounded-corner visual hint for panel */}
-      <rect
-        x={x0}
-        y={y0}
-        width={w}
-        height={h}
-        rx={r}
-        ry={r}
-        fill="none"
-        stroke="#38AEFC"
-        strokeWidth="0.7"
-        strokeDasharray="2,2"
-      />
+      <path d={cutPath} fill={color} fillOpacity="0.05" stroke="none" />
 
-      {/* fold lines */}
-      <path
-        d={foldPath}
-        fill="none"
-        stroke="#38AEFC"
-        strokeWidth="0.7"
-        strokeDasharray="2,2"
-      />
-
-      {/* cut line */}
       <path
         d={cutPath}
         fill="none"
@@ -157,6 +194,11 @@ export const Envelope: React.FC<EnvelopeProps> = ({
         strokeLinejoin="round"
         strokeLinecap="round"
       />
+
+      <path d={line(tl, tr)} fill="none" stroke="#38AEFC" strokeWidth="0.8" strokeDasharray="2,2" />
+      <path d={line(tr, br)} fill="none" stroke="#38AEFC" strokeWidth="0.8" strokeDasharray="2,2" />
+      <path d={line(br, bl)} fill="none" stroke="#38AEFC" strokeWidth="0.8" strokeDasharray="2,2" />
+      <path d={line(bl, tl)} fill="none" stroke="#38AEFC" strokeWidth="0.8" strokeDasharray="2,2" />
     </svg>
   );
 };
