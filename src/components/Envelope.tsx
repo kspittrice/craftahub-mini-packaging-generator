@@ -6,6 +6,35 @@ function pt(x: number, y: number): Pt {
   return { x, y };
 }
 
+function add(a: Pt, b: Pt): Pt {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+function sub(a: Pt, b: Pt): Pt {
+  return { x: a.x - b.x, y: a.y - b.y };
+}
+
+function mul(v: Pt, k: number): Pt {
+  return { x: v.x * k, y: v.y * k };
+}
+
+function len(v: Pt): number {
+  return Math.hypot(v.x, v.y);
+}
+
+function normalize(v: Pt): Pt {
+  const l = len(v) || 1;
+  return { x: v.x / l, y: v.y / l };
+}
+
+function perp(v: Pt): Pt {
+  return { x: -v.y, y: v.x };
+}
+
+function dot(a: Pt, b: Pt): number {
+  return a.x * b.x + a.y * b.y;
+}
+
 function line(a: Pt, b: Pt) {
   return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }
@@ -33,15 +62,15 @@ export const Envelope: React.FC<Props> = ({
   scale,
   color,
 }) => {
-  // Build geometry directly in miniature size
+  // Geometry is built directly in miniature size
   const k = 1 / scale;
 
   const W = clamp(width * k, 4, 260);
   const H = clamp(height * k, 4, 180);
   const O = clamp(overlap * k, 0, 30);
 
-  // Reference screenshot proportions from the previously restored working version
-  // 150x100 real at 1:6 => 25 x 16.667 miniature reference
+  // Reference screenshot proportions from the restored working version
+  // 150x100 real @ 1:6 => 25 x 16.667 miniature reference
   const refW = 150 / 6;
   const refH = 100 / 6;
 
@@ -60,7 +89,7 @@ export const Envelope: React.FC<Props> = ({
     return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
   }
 
-  // Pink outer contour — exactly from your restored base
+  // Pink contour kept exactly from restored base
   const outer = [
     map(231, 893),
     map(320, 608),
@@ -76,16 +105,34 @@ export const Envelope: React.FC<Props> = ({
     map(509, 893),
   ];
 
-  // Blue fold shape — exactly from your restored base
-  const innerLeft = map(320, 608);
-  const innerTop = map(757, 321);
-  const innerRight = map(948, 607);
-  const innerBottom = map(509, 893);
+  // Reference blue points from restored base
+  const rawLeft = map(320, 608);
+  const rawTop = map(757, 321);
+  const rawRight = map(948, 607);
 
-  // Small overlap-dependent adjustment from the restored base
-  const overlapShift = (O - 12.5 * k) * 3;
-  const adjustedTop = pt(innerTop.x - overlapShift, innerTop.y);
-  const adjustedBottom = pt(innerBottom.x + overlapShift * 0.5, innerBottom.y);
+  // Long side direction
+  const ux = normalize(sub(rawTop, rawLeft));
+
+  // Perpendicular direction -> guarantees 90° angles
+  let uy = normalize(perp(ux));
+
+  // Keep rectangle on the same side as the old geometry
+  const testHeight = dot(sub(rawRight, rawTop), uy);
+  if (testHeight < 0) {
+    uy = mul(uy, -1);
+  }
+
+  const rectWidth = len(sub(rawTop, rawLeft));
+  const rectHeight = Math.abs(dot(sub(rawRight, rawTop), uy));
+
+  // Overlap may shift the rectangle slightly, but must not distort angles
+  const overlapShift = (O - 12.5 * k) * 2.0;
+  const shift = mul(ux, -overlapShift * 0.35);
+
+  const tl = add(rawLeft, shift);
+  const tr = add(rawTop, shift);
+  const br = add(tr, mul(uy, rectHeight));
+  const bl = add(tl, mul(uy, rectHeight));
 
   const viewW = (maxX - minX) * sx + 360;
   const viewH = (maxY - minY) * sy + 280;
@@ -122,10 +169,11 @@ export const Envelope: React.FC<Props> = ({
         strokeLinecap="round"
       />
 
-      <path d={line(innerLeft, adjustedTop)} fill="none" stroke="#38aefc" strokeWidth="3" />
-      <path d={line(adjustedTop, innerRight)} fill="none" stroke="#38aefc" strokeWidth="3" />
-      <path d={line(innerRight, adjustedBottom)} fill="none" stroke="#38aefc" strokeWidth="3" />
-      <path d={line(adjustedBottom, innerLeft)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      {/* Blue zone = true rectangle, always 90° */}
+      <path d={line(tl, tr)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      <path d={line(tr, br)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      <path d={line(br, bl)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      <path d={line(bl, tl)} fill="none" stroke="#38aefc" strokeWidth="3" />
     </svg>
   );
 };
