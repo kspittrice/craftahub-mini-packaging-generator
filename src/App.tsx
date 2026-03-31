@@ -1,330 +1,78 @@
-import { useMemo, useState } from "react";
+import React from 'react';
 
-type ScaleMode = "1:6" | "1:12";
-type PageSize = "A4" | "A3";
-type ExportMode = "print" | "cricut";
+function EnvelopeGeometry({ width, height, overlap, radius, scale, fill }) {
+  // 1. Константы и масштаб
+  const k = scale === "1:6" ? 1/6 : 1/12;
+  const w = width * k;
+  const h = height * k;
+  const o = overlap * k;
+  const r = radius * k;
 
-type Pt = { x: number; y: number };
+  // 2. Координаты центральной панели (лицо конверта)
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const y0 = -h / 2;
+  const y1 = h / 2;
 
-function pt(x: number, y: number): Pt {
-  return { x, y };
-}
+  // 3. Расчет точек клапанов (Flaps)
+  // Верхний и нижний клапаны обычно равны половине высоты + нахлест
+  const flapH = (h / 2) + o;
+  const flapW = (w / 2) + o;
 
-function scaleDivisor(scale: ScaleMode) {
-  return scale === "1:6" ? 6 : 12;
-}
+  // 4. Построение путей (D-строки для SVG)
+  // Внешний контур (CUT) - Розовая линия
+  const cutPath = `
+    M ${x0} ${y0} 
+    L ${x0 - flapW} 0 L ${x0} ${y1} 
+    L 0 ${y1 + flapH} L ${x1} ${y1} 
+    L ${x1 + flapW} 0 L ${x1} ${y0} 
+    L 0 ${y0 - flapH} Z
+  `;
 
-function miniValue(real: number, scale: ScaleMode) {
-  return Number((real / scaleDivisor(scale)).toFixed(2));
-}
+  // Линии сгиба (SCORE) - Голубые линии
+  const scoreLines = `
+    M ${x0} ${y0} L ${x1} ${y0}
+    M ${x1} ${y0} L ${x1} ${y1}
+    M ${x1} ${y1} L ${x0} ${y1}
+    M ${x0} ${y1} L ${x0} ${y0}
+  `;
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function line(a: Pt, b: Pt) {
-  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
-}
-
-function polyline(points: Pt[]) {
-  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-}
-
-function EnvelopeGeometry({
-  width,
-  height,
-  overlap,
-  fill,
-}: {
-  width: number;
-  height: number;
-  overlap: number;
-  fill: string;
-}) {
-  const W = clamp(width, 80, 260);
-  const H = clamp(height, 50, 180);
-  const O = clamp(overlap, 0, 30);
-
-  const refW = 150;
-  const refH = 100;
-
-  const minX = 231;
-  const minY = 279;
-  const maxX = 1020;
-  const maxY = 931;
-
-  const sx = W / refW;
-  const sy = H / refH;
-
-  const offsetX = 180;
-  const offsetY = 140;
-
-  function map(x: number, y: number): Pt {
-    return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
-  }
-
-  const outer = [
-    map(231, 893),
-    map(320, 608),
-    map(293, 570),
-    map(409, 279),
-    map(728, 279),
-    map(757, 321),
-    map(1020, 321),
-    map(948, 607),
-    map(974, 645),
-    map(839, 931),
-    map(535, 931),
-    map(509, 893),
-  ];
-
-  const innerLeft = map(320, 608);
-  const innerTop = map(757, 321);
-  const innerRight = map(948, 607);
-  const innerBottom = map(509, 893);
-
-  const overlapShift = (O - 12.5) * 3;
-  const adjustedTop = pt(innerTop.x - overlapShift, innerTop.y);
-  const adjustedBottom = pt(innerBottom.x + overlapShift * 0.5, innerBottom.y);
-
-  const viewW = (maxX - minX) * sx + 360;
-  const viewH = (maxY - minY) * sy + 280;
+  // Настройка вида
+  const viewBoxSize = Math.max(w, h) * 4;
+  const center = viewBoxSize / 2;
 
   return (
-    <div className="geometry-card">
-      <svg viewBox={`0 0 ${viewW} ${viewH}`} className="geometry-svg" role="img">
-        <rect width={viewW} height={viewH} fill="#ffffff" />
-        <rect
-          x="28"
-          y="28"
-          width={viewW - 56}
-          height={viewH - 56}
-          fill="none"
-          stroke="#d9d4cc"
-        />
-
-        <text x="62" y="72" fontSize="16" fill="#222">
-          Envelope {Math.round(width)}×{Math.round(height)} (mm)
-        </text>
-
-        <path
-          d={`${polyline([...outer, outer[0]])} Z`}
-          fill={fill}
-          fillOpacity="0.05"
-          stroke="none"
-        />
-
-        <path
-          d={`${polyline([...outer, outer[0]])} Z`}
-          fill="none"
-          stroke="#ff1493"
-          strokeWidth="7"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-
-        <path d={line(innerLeft, adjustedTop)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(adjustedTop, innerRight)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(innerRight, adjustedBottom)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(adjustedBottom, innerLeft)} fill="none" stroke="#38aefc" strokeWidth="3" />
+    <div className="geometry-card" style={{ background: '#f5f5f5', padding: '20px' }}>
+      <svg 
+        viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`} 
+        style={{ width: '100%', height: 'auto', display: 'block' }}
+      >
+        <g transform={`translate(${center}, ${center})`}>
+          {/* Заливка центральной части */}
+          <rect x={x0} y={y0} width={w} height={h} fill={fill} fillOpacity="0.2" />
+          
+          {/* Слой реза (Pink) */}
+          <path 
+            d={cutPath} 
+            fill="none" 
+            stroke="#FF1493" 
+            strokeWidth="1" 
+            strokeLinejoin="round" 
+          />
+          
+          {/* Слой сгиба (Blue) */}
+          <path 
+            d={scoreLines} 
+            fill="none" 
+            stroke="#38AEFC" 
+            strokeWidth="0.5" 
+            strokeDasharray="2,2" 
+          />
+        </g>
       </svg>
-    </div>
-  );
-}
-
-export default function App() {
-  const [scale, setScale] = useState<ScaleMode>("1:6");
-  const [pageSize, setPageSize] = useState<PageSize>("A4");
-  const [exportMode, setExportMode] = useState<ExportMode>("print");
-
-  const [width, setWidth] = useState<number>(150);
-  const [height, setHeight] = useState<number>(100);
-  const [overlap, setOverlap] = useState<number>(12.5);
-  const [radius, setRadius] = useState<number>(7);
-  const [panelColor, setPanelColor] = useState<string>("#d2a8bf");
-
-  const miniWidth = useMemo(() => miniValue(width, scale), [width, scale]);
-  const miniHeight = useMemo(() => miniValue(height, scale), [height, scale]);
-
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div>
-          <h1>Mini Packaging Generator</h1>
-          <p>Create printable miniature packaging templates in 1:6 and 1:12 scale.</p>
-        </div>
-      </header>
-
-      <main className="layout">
-        <aside className="sidebar">
-          <section className="panel">
-            <h2>Template</h2>
-            <div className="static-template">Envelope</div>
-            <p className="muted">Geometry-first module.</p>
-          </section>
-
-          <section className="panel">
-            <h2>Choose scale</h2>
-            <div className="radio-row">
-              <label>
-                <input
-                  type="radio"
-                  name="scale"
-                  checked={scale === "1:6"}
-                  onChange={() => setScale("1:6")}
-                />
-                1:6
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="scale"
-                  checked={scale === "1:12"}
-                  onChange={() => setScale("1:12")}
-                />
-                1:12
-              </label>
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2>Real-life dimensions (mm)</h2>
-
-            <label className="field">
-              <span>Width</span>
-              <input
-                className="control"
-                type="number"
-                value={width}
-                onChange={(e) => setWidth(Number(e.target.value))}
-              />
-            </label>
-
-            <label className="field">
-              <span>Height</span>
-              <input
-                className="control"
-                type="number"
-                value={height}
-                onChange={(e) => setHeight(Number(e.target.value))}
-              />
-            </label>
-
-            <label className="field">
-              <span>Overlap</span>
-              <input
-                className="control"
-                type="number"
-                step="0.1"
-                value={overlap}
-                onChange={(e) => setOverlap(Number(e.target.value))}
-              />
-            </label>
-
-            <label className="field">
-              <span>Rounded Corners Radius</span>
-              <input
-                className="control"
-                type="number"
-                step="0.1"
-                value={radius}
-                onChange={(e) => setRadius(Number(e.target.value))}
-              />
-            </label>
-          </section>
-
-          <section className="panel">
-            <h2>Miniature size preview</h2>
-            <div className="mini-grid">
-              <div className="mini-item">
-                <strong>{width} mm</strong>
-                <span>{miniWidth} mm</span>
-              </div>
-              <div className="mini-item">
-                <strong>{height} mm</strong>
-                <span>{miniHeight} mm</span>
-              </div>
-            </div>
-          </section>
-        </aside>
-
-        <section className="center-stage">
-          <section className="panel">
-            <h2>Work area</h2>
-            <EnvelopeGeometry
-              width={width}
-              height={height}
-              overlap={overlap}
-              fill={panelColor}
-            />
-          </section>
-        </section>
-
-        <aside className="sidebar">
-          <section className="panel">
-            <h2>Page size</h2>
-            <div className="radio-column">
-              <label>
-                <input
-                  type="radio"
-                  name="page-size"
-                  checked={pageSize === "A4"}
-                  onChange={() => setPageSize("A4")}
-                />
-                A4
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="page-size"
-                  checked={pageSize === "A3"}
-                  onChange={() => setPageSize("A3")}
-                />
-                A3
-              </label>
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2>Export mode</h2>
-            <div className="radio-column">
-              <label>
-                <input
-                  type="radio"
-                  name="export-mode"
-                  checked={exportMode === "print"}
-                  onChange={() => setExportMode("print")}
-                />
-                Print
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="export-mode"
-                  checked={exportMode === "cricut"}
-                  onChange={() => setExportMode("cricut")}
-                />
-                Cricut
-              </label>
-            </div>
-            {exportMode === "cricut" && (
-              <p className="warning">
-                Vector artwork only. Raster files and patterns are excluded from Cricut SVG export.
-              </p>
-            )}
-          </section>
-
-          <section className="panel">
-            <h2>Panel color</h2>
-            <input
-              className="color-picker"
-              type="color"
-              value={panelColor}
-              onChange={(e) => setPanelColor(e.target.value)}
-            />
-          </section>
-        </aside>
-      </main>
+      <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '12px' }}>
+        Preview Scale {scale} | Mini Size: {w.toFixed(1)} x {h.toFixed(1)} mm
+      </div>
     </div>
   );
 }
