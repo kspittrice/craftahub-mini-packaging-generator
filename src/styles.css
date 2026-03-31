@@ -167,59 +167,51 @@ body {
   padding: 6px;
 }
 
-/* Reference block */
-.ref-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+.reference-card {
   overflow: hidden;
   border-radius: 14px;
-  border: 1px solid #ddd4c8;
+  border: 1px solid #ddd5c8;
   background: #fff;
 }
 
-.ref-photo,
-.ref-diagram {
+.reference-image,
+.reference-diagram {
   width: 100%;
 }
 
-.ref-svg {
+.reference-svg {
   width: 100%;
   display: block;
 }
 
-.ref-chip {
+.reference-fill {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   padding: 12px 14px;
-  border-top: 1px solid #ebe3d8;
-  background: #fffdfa;
+  border-top: 1px solid #eee4d8;
   font-size: 13px;
-  color: #555;
+  color: #666;
 }
 
-.ref-chip-color {
+.reference-fill-box {
   width: 42px;
   height: 24px;
-  border: 1px solid #cdbfb2;
+  border: 1px solid #c9bbaa;
   border-radius: 4px;
 }
 
-/* Work area */
-.workarea-card {
+.geometry-card {
   width: 100%;
   overflow: hidden;
   border-radius: 16px;
-  border: 1px solid #d9d2c7;
+  border: 1px solid #d8d2c8;
   background: #fff;
 }
 
-.workarea-svg {
+.geometry-svg {
   width: 100%;
   display: block;
-  background: #fff;
 }
 
 @media (max-width: 1180px) {
