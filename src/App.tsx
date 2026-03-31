@@ -242,7 +242,213 @@ function miniValue(real: number, scale: ScaleMode) {
   return Number((real / scaleDivisor(scale)).toFixed(2));
 }
 
-function PreviewCard({
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function EnvelopePreview({
+  width,
+  height,
+  overlap,
+  radius,
+  fill,
+}: {
+  width: number;
+  height: number;
+  overlap: number;
+  radius: number;
+  fill: string;
+}) {
+  const W = clamp(width, 20, 400);
+  const H = clamp(height, 20, 300);
+  const O = clamp(overlap, 0, H * 0.6);
+  const R = clamp(radius, 0, Math.min(W, H) * 0.2);
+
+  const margin = 40;
+  const bodyX = margin + H * 0.75;
+  const bodyY = margin + O + 10;
+  const bodyW = W;
+  const bodyH = H;
+
+  const leftTipX = bodyX - H * 0.75;
+  const rightTipX = bodyX + bodyW + H * 0.75;
+  const midY = bodyY + bodyH / 2;
+
+  const topPeakX = bodyX + bodyW / 2;
+  const topPeakY = bodyY - O - H * 0.55;
+
+  const bottomPeakX = bodyX + bodyW / 2;
+  const bottomPeakY = bodyY + bodyH + O + H * 0.55;
+
+  const viewWidth = bodyX + bodyW + H * 0.9 + margin;
+  const viewHeight = bottomPeakY + margin;
+
+  const leftFlap = `
+    M ${bodyX} ${bodyY}
+    L ${leftTipX} ${midY}
+    L ${bodyX} ${bodyY + bodyH}
+    Q ${bodyX + R} ${bodyY + bodyH} ${bodyX + R} ${bodyY + bodyH}
+    L ${bodyX + R} ${bodyY + R}
+    Q ${bodyX + R} ${bodyY} ${bodyX} ${bodyY}
+    Z
+  `;
+
+  const rightFlap = `
+    M ${bodyX + bodyW} ${bodyY}
+    L ${rightTipX} ${midY}
+    L ${bodyX + bodyW} ${bodyY + bodyH}
+    Q ${bodyX + bodyW - R} ${bodyY + bodyH} ${bodyX + bodyW - R} ${bodyY + bodyH}
+    L ${bodyX + bodyW - R} ${bodyY + R}
+    Q ${bodyX + bodyW - R} ${bodyY} ${bodyX + bodyW} ${bodyY}
+    Z
+  `;
+
+  const topFlap = `
+    M ${bodyX} ${bodyY}
+    L ${topPeakX} ${topPeakY}
+    L ${bodyX + bodyW} ${bodyY}
+    L ${bodyX + bodyW - O} ${bodyY}
+    L ${topPeakX} ${bodyY - O}
+    L ${bodyX + O} ${bodyY}
+    Z
+  `;
+
+  const bottomFlap = `
+    M ${bodyX} ${bodyY + bodyH}
+    L ${bottomPeakX} ${bottomPeakY}
+    L ${bodyX + bodyW} ${bodyY + bodyH}
+    L ${bodyX + bodyW - O} ${bodyY + bodyH}
+    L ${bottomPeakX} ${bodyY + bodyH + O}
+    L ${bodyX + O} ${bodyY + bodyH}
+    Z
+  `;
+
+  return (
+    <div className="preview-card">
+      <svg
+        viewBox={`0 0 ${viewWidth} ${viewHeight}`}
+        className="preview-svg"
+        role="img"
+      >
+        <rect x="0" y="0" width={viewWidth} height={viewHeight} fill="#ffffff" />
+
+        <path d={leftFlap} fill={fill} stroke="#ff1493" strokeWidth="2.5" />
+        <path d={rightFlap} fill={fill} stroke="#ff1493" strokeWidth="2.5" />
+        <path d={topFlap} fill={fill} stroke="#ff1493" strokeWidth="2.5" />
+        <path d={bottomFlap} fill={fill} stroke="#ff1493" strokeWidth="2.5" />
+
+        <rect
+          x={bodyX}
+          y={bodyY}
+          width={bodyW}
+          height={bodyH}
+          fill={fill}
+          stroke="#ff1493"
+          strokeWidth="2.5"
+          rx={R}
+          ry={R}
+        />
+
+        <line
+          x1={bodyX}
+          y1={bodyY}
+          x2={bodyX + bodyW}
+          y2={bodyY + bodyH}
+          stroke="#36a3ff"
+          strokeWidth="1.8"
+        />
+        <line
+          x1={bodyX + bodyW}
+          y1={bodyY}
+          x2={bodyX}
+          y2={bodyY + bodyH}
+          stroke="#36a3ff"
+          strokeWidth="1.8"
+        />
+
+        <line
+          x1={bodyX}
+          y1={bodyY}
+          x2={topPeakX}
+          y2={topPeakY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bodyX + bodyW}
+          y1={bodyY}
+          x2={topPeakX}
+          y2={topPeakY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bodyX}
+          y1={bodyY + bodyH}
+          x2={bottomPeakX}
+          y2={bottomPeakY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bodyX + bodyW}
+          y1={bodyY + bodyH}
+          x2={bottomPeakX}
+          y2={bottomPeakY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+
+        <line
+          x1={bodyX}
+          y1={bodyY}
+          x2={leftTipX}
+          y2={midY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bodyX}
+          y1={bodyY + bodyH}
+          x2={leftTipX}
+          y2={midY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bodyX + bodyW}
+          y1={bodyY}
+          x2={rightTipX}
+          y2={midY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+        <line
+          x1={bodyX + bodyW}
+          y1={bodyY + bodyH}
+          x2={rightTipX}
+          y2={midY}
+          stroke="#36a3ff"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+        />
+
+        <text x={24} y={28} fontSize="16" fill="#111">
+          Envelope dieline preview
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+function PlaceholderPreview({
   title,
   subtitle,
   fill,
@@ -305,19 +511,50 @@ export default function App() {
 
   function handleTemplateChange(nextId: string) {
     setTemplateId(nextId);
-    setA(80);
-    setB(50);
-    setC(150);
-    setD(20);
-    setE(15);
+
+    if (nextId === "envelope") {
+      setA(150);
+      setB(100);
+      setC(0);
+      setD(0);
+      setE(0);
+    } else {
+      setA(80);
+      setB(50);
+      setC(150);
+      setD(20);
+      setE(15);
+    }
   }
 
   function updateParam(key: string, value: number) {
     setParamValues((prev) => ({ ...prev, [key]: value }));
   }
 
-  const realValues = [a, b, c, d, e].filter((v) => typeof v === "number");
+  const realValues = [a, b, c, d, e].filter((v) => v > 0);
   const miniValues = realValues.map((v) => miniValue(v, scale));
+
+  const preview = useMemo(() => {
+    if (templateId === "envelope") {
+      return (
+        <EnvelopePreview
+          width={a}
+          height={b}
+          overlap={paramValues.overlap ?? 12.5}
+          radius={paramValues.radius ?? 7}
+          fill={panelColor}
+        />
+      );
+    }
+
+    return (
+      <PlaceholderPreview
+        title={activeTemplate.name}
+        subtitle={`${scale} scale · ${pageSize} · ${exportMode === "print" ? "Print" : "Cricut"} mode`}
+        fill={panelColor}
+      />
+    );
+  }, [templateId, a, b, panelColor, paramValues.overlap, paramValues.radius, activeTemplate.name, scale, pageSize, exportMode]);
 
   return (
     <div className="app-shell">
@@ -446,11 +683,7 @@ export default function App() {
         <section className="center-stage">
           <section className="panel">
             <h2>Live preview</h2>
-            <PreviewCard
-              title={activeTemplate.name}
-              subtitle={`${scale} scale · ${pageSize} · ${exportMode === "print" ? "Print" : "Cricut"} mode`}
-              fill={panelColor}
-            />
+            {preview}
           </section>
 
           <section className="panel">
