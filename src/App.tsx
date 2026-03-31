@@ -4,6 +4,12 @@ type ScaleMode = "1:6" | "1:12";
 type PageSize = "A4" | "A3";
 type ExportMode = "print" | "cricut";
 
+type Pt = { x: number; y: number };
+
+function pt(x: number, y: number): Pt {
+  return { x, y };
+}
+
 function scaleDivisor(scale: ScaleMode) {
   return scale === "1:6" ? 6 : 12;
 }
@@ -16,93 +22,120 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-type Pt = { x: number; y: number };
-
-function pt(x: number, y: number): Pt {
-  return { x, y };
-}
-
 function line(a: Pt, b: Pt) {
   return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+}
+
+function polyline(points: Pt[]) {
+  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 }
 
 function EnvelopeGeometry({
   width,
   height,
   overlap,
-  radius,
   fill,
 }: {
   width: number;
   height: number;
   overlap: number;
-  radius: number;
   fill: string;
 }) {
-  const W = clamp(width, 100, 260);
-  const H = clamp(height, 70, 180);
-  const O = clamp(overlap, 6, W * 0.14);
-  const R = clamp(radius, 0, 18);
+  const W = clamp(width, 80, 260);
+  const H = clamp(height, 50, 180);
+  const O = clamp(overlap, 0, 30);
 
-  const pageW = 980;
-  const pageH = 720;
+  // Reference points taken from the user's provided 150x100 screenshot
+  // and then scaled to current width/height.
+  const refW = 150;
+  const refH = 100;
 
-  const cx = 505;
-  const cy = 360;
+  // Bounding box of the screenshot geometry
+  const minX = 231;
+  const minY = 279;
+  const maxX = 1020;
+  const maxY = 931;
 
-  const p1 = { x: cx - W * 0.52, y: cy - H * 0.10 };
-  const p2 = { x: cx - W * 0.22, y: cy - H * 0.68 };
-  const p3 = { x: cx + W * 0.18, y: cy - H * 0.68 };
-  const p4 = { x: cx + W * 0.58, y: cy - H * 0.34 };
-  const p5 = { x: cx + W * 0.44, y: cy + H * 0.08 };
-  const p6 = { x: cx + W * 0.22, y: cy + H * 0.70 };
-  const p7 = { x: cx - W * 0.20, y: cy + H * 0.70 };
-  const p8 = { x: cx - W * 0.56, y: cy + H * 0.36 };
-  const p9 = { x: cx - W * 0.72, y: cy + H * 0.06 };
-  const p10 = { x: cx - W * 0.58, y: cy - H * 0.20 };
+  const sx = W / refW;
+  const sy = H / refH;
 
-  const blueA = { x: cx - W * 0.42, y: cy - H * 0.02 };
-  const blueB = { x: cx + W * 0.02, y: cy - H * 0.66 };
-  const blueC = { x: cx + W * 0.28, y: cy - H * 0.04 };
-  const blueD = { x: cx - W * 0.30, y: cy + H * 0.68 };
+  const offsetX = 180;
+  const offsetY = 140;
 
-  const outerPath = `
-    M ${p1.x} ${p1.y}
-    L ${p2.x} ${p2.y}
-    Q ${p2.x + R * 0.2} ${p2.y - R * 0.8} ${p3.x} ${p3.y}
-    L ${p4.x} ${p4.y}
-    Q ${p4.x + R * 1.0} ${p4.y} ${p5.x} ${p5.y}
-    L ${p6.x} ${p6.y}
-    Q ${p6.x - R * 0.2} ${p6.y + R * 0.8} ${p7.x} ${p7.y}
-    L ${p8.x} ${p8.y}
-    Q ${p8.x - R * 1.0} ${p8.y} ${p9.x} ${p9.y}
-    L ${p10.x} ${p10.y}
-    Q ${p10.x - R * 0.2} ${p10.y - R * 0.8} ${p1.x} ${p1.y}
-  `;
+  function map(x: number, y: number): Pt {
+    return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
+  }
+
+  // Outer contour, tuned from screenshot
+  const outer = [
+    map(231, 893),
+    map(320, 608),
+    map(293, 570),
+    map(409, 279),
+    map(728, 279),
+    map(757, 321),
+    map(1020, 321),
+    map(948, 607),
+    map(974, 645),
+    map(839, 931),
+    map(535, 931),
+    map(509, 893),
+  ];
+
+  // Inner blue fold-shape from screenshot
+  const innerLeft = map(320, 608);
+  const innerTop = map(757, 321);
+  const innerRight = map(948, 607);
+  const innerBottom = map(509, 893);
+
+  // Small overlap-dependent adjustment to mimic parameter effect
+  const overlapShift = (O - 12.5) * 3;
+  const adjustedTop = pt(innerTop.x - overlapShift, innerTop.y);
+  const adjustedBottom = pt(innerBottom.x + overlapShift * 0.5, innerBottom.y);
+
+  const viewW = (maxX - minX) * sx + 360;
+  const viewH = (maxY - minY) * sy + 280;
 
   return (
     <div className="geometry-card">
-      <svg viewBox={`0 0 ${pageW} ${pageH}`} className="geometry-svg" role="img">
-        <rect width={pageW} height={pageH} fill="#ffffff" />
-        <rect x="28" y="28" width={pageW - 56} height={pageH - 56} fill="none" stroke="#d9d4cc" />
+      <svg viewBox={`0 0 ${viewW} ${viewH}`} className="geometry-svg" role="img">
+        <rect width={viewW} height={viewH} fill="#ffffff" />
+        <rect
+          x="28"
+          y="28"
+          width={viewW - 56}
+          height={viewH - 56}
+          fill="none"
+          stroke="#d9d4cc"
+        />
+
         <text x="62" y="72" fontSize="16" fill="#222">
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
+        {/* soft editable zone tint */}
         <path
-          d={outerPath}
+          d={`${polyline([...outer, outer[0]])} Z`}
           fill={fill}
-          fillOpacity="0.06"
+          fillOpacity="0.05"
+          stroke="none"
+        />
+
+        {/* outer cut line */}
+        <path
+          d={`${polyline([...outer, outer[0]])} Z`}
+          fill="none"
           stroke="#ff1493"
           strokeWidth="7"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
 
-        <path d={line(blueA, blueB)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(blueB, blueC)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(blueC, blueD)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(blueD, blueA)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        {/* fold lines */}
+        <path d={line(innerLeft, adjustedTop)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(adjustedTop, innerRight)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(innerRight, adjustedBottom)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(adjustedBottom, innerLeft)} fill="none" stroke="#38aefc" strokeWidth="3" />
       </svg>
     </div>
   );
@@ -136,7 +169,7 @@ export default function App() {
           <section className="panel">
             <h2>Template</h2>
             <div className="static-template">Envelope</div>
-            <p className="muted">Geometry-first test module.</p>
+            <p className="muted">Geometry-first module.</p>
           </section>
 
           <section className="panel">
@@ -231,7 +264,6 @@ export default function App() {
               width={width}
               height={height}
               overlap={overlap}
-              radius={radius}
               fill={panelColor}
             />
           </section>
