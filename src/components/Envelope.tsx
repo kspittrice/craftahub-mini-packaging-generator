@@ -36,21 +36,22 @@ function normalize(v: Pt): Pt {
   return { x: v.x / l, y: v.y / l };
 }
 
-function perp(v: Pt): Pt {
-  return { x: -v.y, y: v.x };
+function line(a: Pt, b: Pt) {
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function line(a: Pt, b: Pt) {
-  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+function mapValue(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
+  const t = (value - fromMin) / (fromMax - fromMin);
+  return toMin + (toMax - toMin) * t;
 }
 
-function rotatedRectangle(center: Pt, ux: Pt, uy: Pt, longSide: number, shortSide: number) {
-  const hx = longSide / 2;
-  const hy = shortSide / 2;
+function rotatedRectangle(center: Pt, ux: Pt, uy: Pt, width: number, height: number) {
+  const hx = width / 2;
+  const hy = height / 2;
 
   return {
     tl: add(center, add(mul(ux, -hx), mul(uy, -hy))),
@@ -70,24 +71,23 @@ export const Envelope: React.FC<EnvelopeProps> = ({
 }) => {
   const k = 1 / scale;
 
-  // Final geometry is built directly in miniature mm
-  const miniW = clamp(width * k, 2, 300);
-  const miniH = clamp(height * k, 2, 300);
-  const miniO = clamp(overlap * k, 0, 100);
-  const _miniR = clamp(radius * k, 0, 40);
+  // Build directly in miniature mm
+  const W = clamp(width * k, 2, 300);
+  const H = clamp(height * k, 2, 300);
+  const O = clamp(overlap * k, 0, 100);
+  const _R = clamp(radius * k, 0, 40);
 
-  // Reference PDF is Envelope 150x100 real mm.
-  // We use its vector contour as the base silhouette.
+  // Reference outer contour from uploaded PDF (Envelope 150x100)
   const refMiniW = 150 / 6; // 25
-  const refMiniH = 100 / 6; // 16.666...
+  const refMiniH = 100 / 6; // 16.6667
 
   const minX = 76.86790466308594;
   const minY = 70.45611572265625;
   const maxX = 772.4346923828125;
   const maxY = 601.1338500976562;
 
-  const sx = miniW / refMiniW;
-  const sy = miniH / refMiniH;
+  const sx = W / refMiniW;
+  const sy = H / refMiniH;
 
   const offsetX = 160;
   const offsetY = 120;
@@ -96,86 +96,60 @@ export const Envelope: React.FC<EnvelopeProps> = ({
     return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
   }
 
-  // Exact vector contour commands extracted from the uploaded PDF
-  const cutSegments = [
-    ["l", [326.3776550292969, 571.6517333984375], [346.0323791503906, 601.1338500976562]],
-    ["l", [346.0323791503906, 601.1338500976562], [588.3155517578125, 601.1338500976562]],
-    ["c", [588.3155517578125, 601.1338500976562], [596.3259887695312, 601.1338500976562], [603.55078125, 596.3173217773438], [606.6317138671875, 588.923095703125]],
-    ["l", [606.6317138671875, 588.923095703125], [699.8175659179688, 365.2770690917969]],
-    ["l", [699.8175659179688, 365.2770690917969], [680.162841796875, 335.79498291015625]],
-    ["l", [680.162841796875, 335.79498291015625], [766.9888916015625, 127.4124755859375]],
-    ["c", [766.9888916015625, 127.4124755859375], [772.4346923828125, 114.34246826171875], [762.8319091796875, 99.938232421875], [748.6726684570312, 99.938232421875]],
-    ["l", [748.6726684570312, 99.938232421875], [522.9249877929688, 99.938232421875]],
-    ["l", [522.9249877929688, 99.938232421875], [503.2702331542969, 70.45611572265625]],
-    ["l", [503.2702331542969, 70.45611572265625], [260.987060546875, 70.45611572265625]],
-    ["c", [260.987060546875, 70.45611572265625], [252.97662353515625, 70.45611572265625], [245.7518310546875, 75.27264404296875], [242.6708984375, 82.6668701171875]],
-    ["l", [242.6708984375, 82.6668701171875], [149.4850616455078, 306.3128967285156]],
-    ["l", [149.4850616455078, 306.3128967285156], [169.13980102539062, 335.79498291015625]],
-    ["l", [169.13980102539062, 335.79498291015625], [82.31375122070312, 544.177490234375]],
-    ["c", [82.31375122070312, 544.177490234375], [76.86790466308594, 557.24755859375], [86.4707260131836, 571.6517333984375], [100.62992095947266, 571.6517333984375]],
-    ["l", [100.62992095947266, 571.6517333984375], [326.3776550292969, 571.6517333984375]],
-  ] as const;
+  // Exact pink contour from the uploaded PDF
+  const cutPath = `
+    M ${mapPoint(326.3776550292969, 571.6517333984375).x} ${mapPoint(326.3776550292969, 571.6517333984375).y}
+    L ${mapPoint(346.0323791503906, 601.1338500976562).x} ${mapPoint(346.0323791503906, 601.1338500976562).y}
+    L ${mapPoint(588.3155517578125, 601.1338500976562).x} ${mapPoint(588.3155517578125, 601.1338500976562).y}
+    C ${mapPoint(596.3259887695312, 601.1338500976562).x} ${mapPoint(596.3259887695312, 601.1338500976562).y},
+      ${mapPoint(603.55078125, 596.3173217773438).x} ${mapPoint(603.55078125, 596.3173217773438).y},
+      ${mapPoint(606.6317138671875, 588.923095703125).x} ${mapPoint(606.6317138671875, 588.923095703125).y}
+    L ${mapPoint(699.8175659179688, 365.2770690917969).x} ${mapPoint(699.8175659179688, 365.2770690917969).y}
+    L ${mapPoint(680.162841796875, 335.79498291015625).x} ${mapPoint(680.162841796875, 335.79498291015625).y}
+    L ${mapPoint(766.9888916015625, 127.4124755859375).x} ${mapPoint(766.9888916015625, 127.4124755859375).y}
+    C ${mapPoint(772.4346923828125, 114.34246826171875).x} ${mapPoint(772.4346923828125, 114.34246826171875).y},
+      ${mapPoint(762.8319091796875, 99.938232421875).x} ${mapPoint(762.8319091796875, 99.938232421875).y},
+      ${mapPoint(748.6726684570312, 99.938232421875).x} ${mapPoint(748.6726684570312, 99.938232421875).y}
+    L ${mapPoint(522.9249877929688, 99.938232421875).x} ${mapPoint(522.9249877929688, 99.938232421875).y}
+    L ${mapPoint(503.2702331542969, 70.45611572265625).x} ${mapPoint(503.2702331542969, 70.45611572265625).y}
+    L ${mapPoint(260.987060546875, 70.45611572265625).x} ${mapPoint(260.987060546875, 70.45611572265625).y}
+    C ${mapPoint(252.97662353515625, 70.45611572265625).x} ${mapPoint(252.97662353515625, 70.45611572265625).y},
+      ${mapPoint(245.7518310546875, 75.27264404296875).x} ${mapPoint(245.7518310546875, 75.27264404296875).y},
+      ${mapPoint(242.6708984375, 82.6668701171875).x} ${mapPoint(242.6708984375, 82.6668701171875).y}
+    L ${mapPoint(149.4850616455078, 306.3128967285156).x} ${mapPoint(149.4850616455078, 306.3128967285156).y}
+    L ${mapPoint(169.13980102539062, 335.79498291015625).x} ${mapPoint(169.13980102539062, 335.79498291015625).y}
+    L ${mapPoint(82.31375122070312, 544.177490234375).x} ${mapPoint(82.31375122070312, 544.177490234375).y}
+    C ${mapPoint(76.86790466308594, 557.24755859375).x} ${mapPoint(76.86790466308594, 557.24755859375).y},
+      ${mapPoint(86.4707260131836, 571.6517333984375).x} ${mapPoint(86.4707260131836, 571.6517333984375).y},
+      ${mapPoint(100.62992095947266, 571.6517333984375).x} ${mapPoint(100.62992095947266, 571.6517333984375).y}
+    L ${mapPoint(326.3776550292969, 571.6517333984375).x} ${mapPoint(326.3776550292969, 571.6517333984375).y}
+    Z
+  `;
 
-  // Build exact pink path from extracted vector commands
-  let cutPath = "";
-  for (let i = 0; i < cutSegments.length; i++) {
-    const seg = cutSegments[i];
-    if (seg[0] === "l") {
-      const [, p0, p1] = seg;
-      const a = mapPoint(p0[0], p0[1]);
-      const b = mapPoint(p1[0], p1[1]);
-      if (i === 0) {
-        cutPath += `M ${a.x} ${a.y} `;
-      }
-      cutPath += `L ${b.x} ${b.y} `;
-    } else {
-      const [, p0, c1, c2, p3] = seg;
-      const a = mapPoint(p0[0], p0[1]);
-      const b = mapPoint(c1[0], c1[1]);
-      const c = mapPoint(c2[0], c2[1]);
-      const d = mapPoint(p3[0], p3[1]);
-      if (i === 0) {
-        cutPath += `M ${a.x} ${a.y} `;
-      }
-      cutPath += `C ${b.x} ${b.y}, ${c.x} ${c.y}, ${d.x} ${d.y} `;
-    }
-  }
-  cutPath += "Z";
-
-  // Exact blue quad from the uploaded PDF
+  // Fixed orientation from the PDF blue panel
   const refTop = pt(522.9249877929688, 99.938232421875);
-  const refRight = pt(680.162841796875, 335.79498291015625);
-  const refBottom = pt(326.3776550292969, 571.6517333984375);
   const refLeft = pt(169.13980102539062, 335.79498291015625);
 
-  // Orientation from PDF
-  const ux = normalize(sub(refLeft, refTop));   // long direction
-  const uy = normalize(sub(refRight, refTop));  // short direction
+  const ux = normalize(sub(mapPoint(refLeft.x, refLeft.y), mapPoint(refTop.x, refTop.y)));
+  const uy = normalize({ x: -ux.y, y: ux.x });
 
-  const refLong = len(sub(refLeft, refTop));
-  const refShort = len(sub(refRight, refTop));
+  // Use the exact center of the blue panel from the PDF, mapped into current contour space
+  const refCenterX = (522.9249877929688 + 680.162841796875 + 326.3776550292969 + 169.13980102539062) / 4;
+  const refCenterY = (99.938232421875 + 335.79498291015625 + 571.6517333984375 + 335.79498291015625) / 4;
 
-  const centerRef = pt(
-    (refTop.x + refRight.x + refBottom.x + refLeft.x) / 4,
-    (refTop.y + refRight.y + refBottom.y + refLeft.y) / 4
-  );
+  let center = mapPoint(refCenterX, refCenterY);
 
-  const center = mapPoint(centerRef.x, centerRef.y);
+  // Slight overlap adjustment, position only
+  const overlapShift = (O - 12.5 * k) * 2.5;
+  center = add(center, mul(ux, -overlapShift));
 
-  const longSide = refLong * (miniW / refMiniW);
-  const shortSide = refShort * (miniH / refMiniH);
+  // IMPORTANT:
+  // blue zone dimensions come directly from user's miniature width/height,
+  // not from reference extracted lengths
+  const blueWidth = W;
+  const blueHeight = H;
 
-  // overlap nudges the blue zone slightly without breaking 90° corners
-  const overlapShift = (miniO - (12.5 / 6)) * 4.0;
-  const shiftedCenter = add(center, mul(ux, -overlapShift));
-
-  const { tl, tr, br, bl } = rotatedRectangle(
-    shiftedCenter,
-    ux,
-    uy,
-    longSide,
-    shortSide
-  );
+  const { tl, tr, br, bl } = rotatedRectangle(center, ux, uy, blueWidth, blueHeight);
 
   const viewW = (maxX - minX) * sx + 320;
   const viewH = (maxY - minY) * sy + 240;
