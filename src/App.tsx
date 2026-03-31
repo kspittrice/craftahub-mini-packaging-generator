@@ -10,41 +10,6 @@ function pt(x: number, y: number): Pt {
   return { x, y };
 }
 
-function add(a: Pt, b: Pt): Pt {
-  return { x: a.x + b.x, y: a.y + b.y };
-}
-
-function sub(a: Pt, b: Pt): Pt {
-  return { x: a.x - b.x, y: a.y - b.y };
-}
-
-function mul(a: Pt, k: number): Pt {
-  return { x: a.x * k, y: a.y * k };
-}
-
-function mid(a: Pt, b: Pt): Pt {
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-}
-
-function line(a: Pt, b: Pt) {
-  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
-}
-
-function polygon(points: Pt[]) {
-  return points.map((p) => `${p.x},${p.y}`).join(" ");
-}
-
-function pathFromPoints(points: Pt[], close = true) {
-  const d = points
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
-    .join(" ");
-  return close ? `${d} Z` : d;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
 function scaleDivisor(scale: ScaleMode) {
   return scale === "1:6" ? 6 : 12;
 }
@@ -53,107 +18,83 @@ function miniValue(real: number, scale: ScaleMode) {
   return Number((real / scaleDivisor(scale)).toFixed(2));
 }
 
-function rotatedRectangle(
-  center: Pt,
-  width: number,
-  height: number,
-  angleDeg: number
-) {
-  const a = (angleDeg * Math.PI) / 180;
-  const ux = pt(Math.cos(a), Math.sin(a));
-  const uy = pt(-Math.sin(a), Math.cos(a));
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
-  const hx = width / 2;
-  const hy = height / 2;
+function line(a: Pt, b: Pt) {
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+}
 
-  const TL = add(center, add(mul(ux, -hx), mul(uy, -hy)));
-  const TR = add(center, add(mul(ux, hx), mul(uy, -hy)));
-  const BR = add(center, add(mul(ux, hx), mul(uy, hy)));
-  const BL = add(center, add(mul(ux, -hx), mul(uy, hy)));
-
-  return { TL, TR, BR, BL, ux, uy };
+function polyline(points: Pt[]) {
+  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 }
 
 function EnvelopeGeometry({
   width,
   height,
   overlap,
-  radius,
   fill,
 }: {
   width: number;
   height: number;
   overlap: number;
-  radius: number;
   fill: string;
 }) {
   const W = clamp(width, 80, 260);
   const H = clamp(height, 50, 180);
   const O = clamp(overlap, 0, 30);
-  const R = clamp(radius, 0, 20);
 
-  const pageW = 980;
-  const pageH = 720;
-  const center = pt(520, 380);
+  // Reference points taken from the user's provided 150x100 screenshot
+  // and then scaled to current width/height.
+  const refW = 150;
+  const refH = 100;
 
-  // Fixed rotation so the inner blue panel always stays a true rectangle
-  const angle = -36;
+  // Bounding box of the screenshot geometry
+  const minX = 231;
+  const minY = 279;
+  const maxX = 1020;
+  const maxY = 931;
 
-  const { TL, TR, BR, BL, ux, uy } = rotatedRectangle(center, W * 1.05, H * 1.02, angle);
+  const sx = W / refW;
+  const sy = H / refH;
 
-  // Outward normals for each edge
-  const nTop = mul(uy, -1);
-  const nRight = ux;
-  const nBottom = uy;
-  const nLeft = mul(ux, -1);
+  const offsetX = 180;
+  const offsetY = 140;
 
-  // Flap depths
-  const topDepth = H * 0.62 + O * 0.8;
-  const sideDepth = H * 0.42 + O * 0.25;
-  const bottomDepth = H * 0.58 + O * 0.55;
+  function map(x: number, y: number): Pt {
+    return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
+  }
 
-  // Small tangential extension to resemble the reference geometry
-  const skewTop = W * 0.06;
-  const skewSide = H * 0.06;
-  const skewBottom = W * 0.04;
-
-  // Top flap outer points (parallel to top edge)
-  const topOuterL = add(add(TL, mul(nTop, topDepth)), mul(ux, -skewTop));
-  const topOuterR = add(add(TR, mul(nTop, topDepth)), mul(ux, skewTop));
-
-  // Right flap outer points
-  const rightOuterT = add(add(TR, mul(nRight, sideDepth)), mul(uy, -skewSide));
-  const rightOuterB = add(add(BR, mul(nRight, sideDepth)), mul(uy, skewSide));
-
-  // Bottom flap outer points
-  const bottomOuterR = add(add(BR, mul(nBottom, bottomDepth)), mul(ux, skewBottom));
-  const bottomOuterL = add(add(BL, mul(nBottom, bottomDepth)), mul(ux, -skewBottom));
-
-  // Left flap outer points
-  const leftOuterB = add(add(BL, mul(nLeft, sideDepth)), mul(uy, skewSide));
-  const leftOuterT = add(add(TL, mul(nLeft, sideDepth)), mul(uy, -skewSide));
-
-  // Contour order around the shape
-  const outerPoints = [
-    TL,
-    topOuterL,
-    topOuterR,
-    TR,
-    rightOuterT,
-    rightOuterB,
-    BR,
-    bottomOuterR,
-    bottomOuterL,
-    BL,
-    leftOuterB,
-    leftOuterT,
+  // Outer contour, tuned from screenshot
+  const outer = [
+    map(231, 893),
+    map(320, 608),
+    map(293, 570),
+    map(409, 279),
+    map(728, 279),
+    map(757, 321),
+    map(1020, 321),
+    map(948, 607),
+    map(974, 645),
+    map(839, 931),
+    map(535, 931),
+    map(509, 893),
   ];
 
-  // Slight rounding effect by smoothing only visually with joins; radius retained as displayed param
-  const outerPath = pathFromPoints(outerPoints, true);
+  // Inner blue fold-shape from screenshot
+  const innerLeft = map(320, 608);
+  const innerTop = map(757, 321);
+  const innerRight = map(948, 607);
+  const innerBottom = map(509, 893);
 
-  const viewW = pageW;
-  const viewH = pageH;
+  // Small overlap-dependent adjustment to mimic parameter effect
+  const overlapShift = (O - 12.5) * 3;
+  const adjustedTop = pt(innerTop.x - overlapShift, innerTop.y);
+  const adjustedBottom = pt(innerBottom.x + overlapShift * 0.5, innerBottom.y);
+
+  const viewW = (maxX - minX) * sx + 360;
+  const viewH = (maxY - minY) * sy + 280;
 
   return (
     <div className="geometry-card">
@@ -172,12 +113,17 @@ function EnvelopeGeometry({
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
-        {/* editable zone tint */}
-        <path d={outerPath} fill={fill} fillOpacity="0.05" stroke="none" />
-
-        {/* cut line */}
+        {/* soft editable zone tint */}
         <path
-          d={outerPath}
+          d={`${polyline([...outer, outer[0]])} Z`}
+          fill={fill}
+          fillOpacity="0.05"
+          stroke="none"
+        />
+
+        {/* outer cut line */}
+        <path
+          d={`${polyline([...outer, outer[0]])} Z`}
           fill="none"
           stroke="#ff1493"
           strokeWidth="7"
@@ -185,21 +131,11 @@ function EnvelopeGeometry({
           strokeLinecap="round"
         />
 
-        {/* blue panel outline: always a true rectangle */}
-        <path d={line(TL, TR)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(TR, BR)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(BR, BL)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(BL, TL)} fill="none" stroke="#38aefc" strokeWidth="3" />
-
-        {/* fold lines from panel to flaps */}
-        <path d={line(TL, topOuterL)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(TR, topOuterR)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(TR, rightOuterT)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(BR, rightOuterB)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(BR, bottomOuterR)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(BL, bottomOuterL)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(BL, leftOuterB)} fill="none" stroke="#38aefc" strokeWidth="0" />
-        <path d={line(TL, leftOuterT)} fill="none" stroke="#38aefc" strokeWidth="0" />
+        {/* fold lines */}
+        <path d={line(innerLeft, adjustedTop)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(adjustedTop, innerRight)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(innerRight, adjustedBottom)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(adjustedBottom, innerLeft)} fill="none" stroke="#38aefc" strokeWidth="3" />
       </svg>
     </div>
   );
@@ -328,7 +264,6 @@ export default function App() {
               width={width}
               height={height}
               overlap={overlap}
-              radius={radius}
               fill={panelColor}
             />
           </section>
