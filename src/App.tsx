@@ -43,7 +43,7 @@ export default function App() {
           <section className="panel">
             <h2>Template</h2>
             <div className="static-template">Envelope</div>
-            <p className="muted">Modular geometry component.</p>
+            <p className="muted">Clean-room modular geometry component.</p>
           </section>
 
           <section className="panel">
@@ -146,6 +146,7 @@ export default function App() {
               width={width}
               height={height}
               overlap={overlap}
+              radius={radius}
               scale={scale === "1:6" ? 6 : 12}
               color={panelColor}
             />
