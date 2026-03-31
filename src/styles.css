@@ -90,6 +90,14 @@ body {
   background: #fff;
 }
 
+.static-template {
+  border: 1px solid #d5d0c7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  font-size: 14px;
+}
+
 .radio-row,
 .radio-column {
   display: flex;
@@ -117,20 +125,6 @@ body {
   color: #7d5400;
   font-size: 13px;
   line-height: 1.5;
-}
-
-.preview-card {
-  width: 100%;
-  overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid #ded6ca;
-  background: #ffffff;
-}
-
-.preview-svg {
-  width: 100%;
-  display: block;
-  background: #fff;
 }
 
 .mini-grid {
@@ -165,40 +159,6 @@ body {
   border-radius: 12px;
   background: #fff;
   padding: 6px;
-}
-
-.reference-card {
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid #ddd5c8;
-  background: #fff;
-}
-
-.reference-image,
-.reference-diagram {
-  width: 100%;
-}
-
-.reference-svg {
-  width: 100%;
-  display: block;
-}
-
-.reference-fill {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-top: 1px solid #eee4d8;
-  font-size: 13px;
-  color: #666;
-}
-
-.reference-fill-box {
-  width: 42px;
-  height: 24px;
-  border: 1px solid #c9bbaa;
-  border-radius: 4px;
 }
 
 .geometry-card {
