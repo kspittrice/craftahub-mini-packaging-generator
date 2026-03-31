@@ -26,10 +26,6 @@ function line(a: Pt, b: Pt) {
   return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }
 
-function polygon(points: Pt[]) {
-  return points.map((p) => `${p.x},${p.y}`).join(" ");
-}
-
 function EnvelopeGeometry({
   width,
   height,
@@ -43,178 +39,84 @@ function EnvelopeGeometry({
   radius: number;
   fill: string;
 }) {
-  const W = clamp(width, 60, 260);
-  const H = clamp(height, 40, 180);
-  const O = clamp(overlap, 0, H * 0.35);
-  const R = clamp(radius, 0, Math.min(18, H * 0.18));
+  const W = clamp(width, 100, 260);
+  const H = clamp(height, 70, 180);
+  const O = clamp(overlap, 6, W * 0.14);
+  const R = clamp(radius, 0, 18);
 
-  const bodyX = 260;
-  const bodyY = 160;
+  const pageW = 980;
+  const pageH = 720;
 
-  const bodyTL = pt(bodyX, bodyY);
-  const bodyTR = pt(bodyX + W, bodyY);
-  const bodyBR = pt(bodyX + W, bodyY + H);
-  const bodyBL = pt(bodyX, bodyY + H);
+  // inner tilted panel, closer to screenshot proportions
+  const innerTL = pt(420, 315);
+  const innerTR = pt(560, 235);
+  const innerBR = pt(605, 335);
+  const innerBL = pt(445, 455);
 
-  const leftTip = pt(bodyX - H * 0.34, bodyY + H / 2);
-  const rightTip = pt(bodyX + W + H * 0.34, bodyY + H / 2);
+  // outer contour, hand-tuned to resemble the reference screenshot
+  const a = pt(355, 445);
+  const b = pt(300, 335);
+  const c = pt(360, 190);
+  const d = pt(520, 190);
+  const e = pt(585, 235);
+  const f = pt(705, 235);
+  const g = pt(800, 235);
+  const h = pt(860, 285);
+  const i = pt(812, 410);
+  const j = pt(748, 490);
+  const k = pt(672, 590);
+  const l = pt(430, 590);
+  const m = pt(355, 495);
 
-  const topPeak = pt(bodyX + W / 2, bodyY - H * 0.62);
-  const bottomPeak = pt(bodyX + W / 2, bodyY + H + H * 0.62);
-
-  const topLeftBase = pt(bodyX + O, bodyY);
-  const topRightBase = pt(bodyX + W - O, bodyY);
-
-  const bottomLeftBase = pt(bodyX + O, bodyY + H);
-  const bottomRightBase = pt(bodyX + W - O, bodyY + H);
-
-  const viewBoxWidth = bodyX + W + H * 0.55 + 120;
-  const viewBoxHeight = bodyY + H + H * 0.75 + 120;
+  const outerPath = `
+    M ${a.x} ${a.y}
+    L ${b.x} ${b.y}
+    Q ${b.x - R * 0.6} ${b.y - R * 0.4} ${c.x} ${c.y}
+    Q ${c.x + R * 0.4} ${c.y - R * 0.2} ${d.x} ${d.y}
+    L ${e.x} ${e.y}
+    L ${g.x} ${g.y}
+    Q ${g.x + R * 1.4} ${g.y} ${h.x} ${h.y}
+    L ${i.x} ${i.y}
+    L ${j.x} ${j.y}
+    Q ${j.x - R * 0.5} ${j.y + R * 0.8} ${k.x} ${k.y}
+    Q ${k.x - R * 0.6} ${k.y} ${l.x} ${l.y}
+    L ${m.x} ${m.y}
+    L ${a.x} ${a.y}
+  `;
 
   return (
     <div className="geometry-card">
-      <svg
-        viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-        className="geometry-svg"
-        role="img"
-      >
-        <rect width={viewBoxWidth} height={viewBoxHeight} fill="#ffffff" />
-        <rect
-          x="28"
-          y="28"
-          width={viewBoxWidth - 56}
-          height={viewBoxHeight - 56}
-          fill="none"
-          stroke="#d9d4cc"
-        />
-
-        <text x="52" y="62" fontSize="16" fill="#222">
+      <svg viewBox={`0 0 ${pageW} ${pageH}`} className="geometry-svg" role="img">
+        <rect width={pageW} height={pageH} fill="#ffffff" />
+        <rect x="28" y="28" width={pageW - 56} height={pageH - 56} fill="none" stroke="#d9d4cc" />
+        <text x="62" y="72" fontSize="16" fill="#222">
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
-        {/* CUT LINES */}
-        <polygon
-          points={polygon([topLeftBase, topPeak, topRightBase])}
-          fill={fill}
-          fillOpacity="0.10"
+        {/* subtle fill only to show editable area */}
+        <path d={outerPath} fill={fill} fillOpacity="0.06" stroke="none" />
+
+        {/* cut line */}
+        <path
+          d={outerPath}
+          fill="none"
           stroke="#ff1493"
-          strokeWidth="5"
+          strokeWidth="7"
           strokeLinejoin="round"
+          strokeLinecap="round"
         />
 
-        <polygon
-          points={polygon([bodyTL, leftTip, bodyBL])}
-          fill={fill}
-          fillOpacity="0.10"
-          stroke="#ff1493"
-          strokeWidth="5"
-          strokeLinejoin="round"
-        />
+        {/* fold lines / inner panel */}
+        <path d={line(innerTL, innerTR)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(innerTR, innerBR)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(innerBR, innerBL)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(innerBL, innerTL)} fill="none" stroke="#38aefc" strokeWidth="3" />
 
-        <polygon
-          points={polygon([bodyTR, rightTip, bodyBR])}
-          fill={fill}
-          fillOpacity="0.10"
-          stroke="#ff1493"
-          strokeWidth="5"
-          strokeLinejoin="round"
-        />
-
-        <polygon
-          points={polygon([bottomLeftBase, bottomPeak, bottomRightBase])}
-          fill={fill}
-          fillOpacity="0.10"
-          stroke="#ff1493"
-          strokeWidth="5"
-          strokeLinejoin="round"
-        />
-
-        <rect
-          x={bodyX}
-          y={bodyY}
-          width={W}
-          height={H}
-          rx={R}
-          ry={R}
-          fill="none"
-          stroke="#ff1493"
-          strokeWidth="5"
-        />
-
-        {/* FOLD LINES */}
-        <path
-          d={line(bodyTL, topPeak)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-        <path
-          d={line(bodyTR, topPeak)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-
-        <path
-          d={line(bodyTL, leftTip)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-        <path
-          d={line(bodyBL, leftTip)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-
-        <path
-          d={line(bodyTR, rightTip)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-        <path
-          d={line(bodyBR, rightTip)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-
-        <path
-          d={line(bodyBL, bottomPeak)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-        <path
-          d={line(bodyBR, bottomPeak)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-          strokeDasharray="6 5"
-        />
-
-        {/* BODY DIAGONALS */}
-        <path
-          d={line(bodyTL, bodyBR)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-        />
-        <path
-          d={line(bodyTR, bodyBL)}
-          fill="none"
-          stroke="#35a9ff"
-          strokeWidth="2.2"
-        />
+        {/* diagonals to side flaps */}
+        <path d={line(b, innerTL)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(m, innerBL)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(e, innerTR)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(i, innerBR)} fill="none" stroke="#38aefc" strokeWidth="3" />
       </svg>
     </div>
   );
