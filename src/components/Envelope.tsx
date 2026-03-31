@@ -1,5 +1,23 @@
 import React from "react";
 
+type Pt = { x: number; y: number };
+
+function pt(x: number, y: number): Pt {
+  return { x, y };
+}
+
+function line(a: Pt, b: Pt) {
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+}
+
+function polyline(points: Pt[]) {
+  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 interface Props {
   width: number;    // real mm
   height: number;   // real mm
@@ -15,83 +33,99 @@ export const Envelope: React.FC<Props> = ({
   scale,
   color,
 }) => {
+  // Build geometry directly in miniature size
   const k = 1 / scale;
 
-  // Build geometry directly in miniature mm
-  const w = Math.max(2, width * k);
-  const h = Math.max(2, height * k);
-  const o = Math.max(0, overlap * k);
+  const W = clamp(width * k, 4, 260);
+  const H = clamp(height * k, 4, 180);
+  const O = clamp(overlap * k, 0, 30);
 
-  // Central rectangular panel
-  const x0 = -w / 2;
-  const x1 = w / 2;
-  const y0 = -h / 2;
-  const y1 = h / 2;
+  // Reference screenshot proportions from the previously restored working version
+  // 150x100 real at 1:6 => 25 x 16.667 miniature reference
+  const refW = 150 / 6;
+  const refH = 100 / 6;
 
-  // Symmetric flap tips
-  const topTip = { x: 0, y: y0 - (h / 2.2) - o };
-  const bottomTip = { x: 0, y: y1 + (h / 2.2) + o };
-  const leftTip = { x: x0 - (w / 2.2) - o, y: 0 };
-  const rightTip = { x: x1 + (w / 2.2) + o, y: 0 };
+  const minX = 231;
+  const minY = 279;
+  const maxX = 1020;
+  const maxY = 931;
 
-  // Outer cut contour
-  const cutPath = `
-    M ${x0} ${y0}
-    L ${topTip.x} ${topTip.y}
-    L ${x1} ${y0}
-    L ${rightTip.x} ${rightTip.y}
-    L ${x1} ${y1}
-    L ${bottomTip.x} ${bottomTip.y}
-    L ${x0} ${y1}
-    L ${leftTip.x} ${leftTip.y}
-    Z
-  `;
+  const sx = W / refW;
+  const sy = H / refH;
 
-  // Fold / score lines
-  const foldPath = `
-    M ${x0} ${y0} L ${x1} ${y0}
-    M ${x1} ${y0} L ${x1} ${y1}
-    M ${x1} ${y1} L ${x0} ${y1}
-    M ${x0} ${y1} L ${x0} ${y0}
+  const offsetX = 180;
+  const offsetY = 140;
 
-    M ${x0} ${y0} L ${topTip.x} ${topTip.y}
-    M ${x1} ${y0} L ${topTip.x} ${topTip.y}
+  function map(x: number, y: number): Pt {
+    return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
+  }
 
-    M ${x1} ${y0} L ${rightTip.x} ${rightTip.y}
-    M ${x1} ${y1} L ${rightTip.x} ${rightTip.y}
+  // Pink outer contour — exactly from your restored base
+  const outer = [
+    map(231, 893),
+    map(320, 608),
+    map(293, 570),
+    map(409, 279),
+    map(728, 279),
+    map(757, 321),
+    map(1020, 321),
+    map(948, 607),
+    map(974, 645),
+    map(839, 931),
+    map(535, 931),
+    map(509, 893),
+  ];
 
-    M ${x0} ${y1} L ${bottomTip.x} ${bottomTip.y}
-    M ${x1} ${y1} L ${bottomTip.x} ${bottomTip.y}
+  // Blue fold shape — exactly from your restored base
+  const innerLeft = map(320, 608);
+  const innerTop = map(757, 321);
+  const innerRight = map(948, 607);
+  const innerBottom = map(509, 893);
 
-    M ${x0} ${y0} L ${leftTip.x} ${leftTip.y}
-    M ${x0} ${y1} L ${leftTip.x} ${leftTip.y}
-  `;
+  // Small overlap-dependent adjustment from the restored base
+  const overlapShift = (O - 12.5 * k) * 3;
+  const adjustedTop = pt(innerTop.x - overlapShift, innerTop.y);
+  const adjustedBottom = pt(innerBottom.x + overlapShift * 0.5, innerBottom.y);
 
-  // Dynamic viewBox
-  const margin = Math.max(w, h) * 0.9;
-  const vbX = leftTip.x - margin * 0.25;
-  const vbY = topTip.y - margin * 0.25;
-  const vbW = rightTip.x - leftTip.x + margin * 0.5;
-  const vbH = bottomTip.y - topTip.y + margin * 0.5;
+  const viewW = (maxX - minX) * sx + 360;
+  const viewH = (maxY - minY) * sy + 280;
 
   return (
-    <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} className="w-full h-auto">
-      <path d={cutPath} fill={color} fillOpacity="0.18" />
-      <path
-        d={foldPath}
+    <svg viewBox={`0 0 ${viewW} ${viewH}`} className="w-full h-auto">
+      <rect width={viewW} height={viewH} fill="#ffffff" />
+      <rect
+        x="28"
+        y="28"
+        width={viewW - 56}
+        height={viewH - 56}
         fill="none"
-        stroke="#38AEFC"
-        strokeWidth="0.7"
-        strokeDasharray="2,2"
+        stroke="#d9d4cc"
       />
+
+      <text x="62" y="72" fontSize="16" fill="#222">
+        Envelope mini template · {W.toFixed(2)} × {H.toFixed(2)} mm
+      </text>
+
       <path
-        d={cutPath}
+        d={`${polyline([...outer, outer[0]])} Z`}
+        fill={color}
+        fillOpacity="0.05"
+        stroke="none"
+      />
+
+      <path
+        d={`${polyline([...outer, outer[0]])} Z`}
         fill="none"
-        stroke="#FF1493"
-        strokeWidth="1.1"
+        stroke="#ff1493"
+        strokeWidth="7"
         strokeLinejoin="round"
         strokeLinecap="round"
       />
+
+      <path d={line(innerLeft, adjustedTop)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      <path d={line(adjustedTop, innerRight)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      <path d={line(innerRight, adjustedBottom)} fill="none" stroke="#38aefc" strokeWidth="3" />
+      <path d={line(adjustedBottom, innerLeft)} fill="none" stroke="#38aefc" strokeWidth="3" />
     </svg>
   );
 };
