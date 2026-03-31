@@ -26,6 +26,16 @@ type TemplateDef = {
 
 const templates: TemplateDef[] = [
   {
+    id: "envelope",
+    name: "Envelope",
+    description: "Flat envelope template.",
+    dimensionLabels: { a: "Width", b: "Height" },
+    params: [
+      { key: "overlap", label: "Overlap", defaultValue: 12.5 },
+      { key: "radius", label: "Rounded Corners Radius", defaultValue: 7 },
+    ],
+  },
+  {
     id: "bag",
     name: "Bag",
     description: "Classic shopping bag style template.",
@@ -58,11 +68,7 @@ const templates: TemplateDef[] = [
     id: "cone",
     name: "Cone (Truncated)",
     description: "Truncated cone template.",
-    dimensionLabels: {
-      a: "Top Diameter",
-      b: "Bottom Diameter",
-      c: "Height",
-    },
+    dimensionLabels: { a: "Top Diameter", b: "Bottom Diameter", c: "Height" },
     params: [
       { key: "glueAngle", label: "Glue Flap Angle", defaultValue: 70 },
       { key: "glueFlap", label: "Glue Flap Size", defaultValue: 7 },
@@ -72,26 +78,14 @@ const templates: TemplateDef[] = [
     id: "counter-display",
     name: "Counter Display",
     description: "Angled display tray.",
-    dimensionLabels: {
-      a: "Length",
-      b: "Width",
-      c: "Height",
-      d: "Front",
-      e: "Flap Height",
-    },
+    dimensionLabels: { a: "Length", b: "Width", c: "Height", d: "Front", e: "Flap Height" },
     params: [],
   },
   {
     id: "elliptical-box",
     name: "Elliptical Box",
     description: "Oval box with lid.",
-    dimensionLabels: {
-      a: "Length",
-      b: "Width",
-      c: "Height",
-      d: "Lid Height",
-      e: "Extra Offset for Caps",
-    },
+    dimensionLabels: { a: "Length", b: "Width", c: "Height", d: "Lid Height", e: "Extra Offset for Caps" },
     params: [
       { key: "clearance", label: "Clearance (%)", defaultValue: 3 },
       { key: "glueFlaps", label: "Number of Glue Flaps", defaultValue: 20 },
@@ -100,26 +94,10 @@ const templates: TemplateDef[] = [
     ],
   },
   {
-    id: "envelope",
-    name: "Envelope",
-    description: "Flat envelope template.",
-    dimensionLabels: { a: "Width", b: "Height" },
-    params: [
-      { key: "overlap", label: "Overlap", defaultValue: 12.5 },
-      { key: "radius", label: "Rounded Corners Radius", defaultValue: 7 },
-    ],
-  },
-  {
     id: "match-box",
     name: "Match Box",
     description: "Tray-and-sleeve style box.",
-    dimensionLabels: {
-      a: "Length",
-      b: "Width",
-      c: "Height",
-      d: "Material Thickness",
-      e: "Clearance",
-    },
+    dimensionLabels: { a: "Length", b: "Width", c: "Height", d: "Material Thickness", e: "Clearance" },
     params: [
       { key: "glueFlap", label: "Glue Flap Size", defaultValue: 10 },
       { key: "glueAngle", label: "Glue Flap Angle", defaultValue: 85 },
@@ -129,13 +107,7 @@ const templates: TemplateDef[] = [
     id: "milk-carton",
     name: "Milk Carton",
     description: "Milk carton style package.",
-    dimensionLabels: {
-      a: "Length",
-      b: "Width",
-      c: "Height",
-      d: "Roof Height",
-      e: "Top Flap",
-    },
+    dimensionLabels: { a: "Length", b: "Width", c: "Height", d: "Roof Height", e: "Top Flap" },
     params: [
       { key: "radius", label: "Rounded Corners Radius", defaultValue: 8 },
       { key: "glueFlap", label: "Glue Flap Size", defaultValue: 30 },
@@ -146,12 +118,7 @@ const templates: TemplateDef[] = [
     id: "nestable-tray",
     name: "Nestable Tray",
     description: "Tray with draft angle.",
-    dimensionLabels: {
-      a: "Length",
-      b: "Width",
-      c: "Height",
-      d: "Draft Angle",
-    },
+    dimensionLabels: { a: "Length", b: "Width", c: "Height", d: "Draft Angle" },
     params: [
       { key: "glueFlap", label: "Glue Flap Size", defaultValue: 8 },
       { key: "glueAngle", label: "Glue Flap Angle", defaultValue: 80 },
@@ -162,13 +129,7 @@ const templates: TemplateDef[] = [
     id: "passepartout",
     name: "Passepartout",
     description: "Frame insert / shadow box style template.",
-    dimensionLabels: {
-      a: "Picture Length",
-      b: "Picture Width",
-      c: "Height",
-      d: "Frame Width",
-      e: "Frame Depth",
-    },
+    dimensionLabels: { a: "Picture Length", b: "Picture Width", c: "Height", d: "Frame Width", e: "Frame Depth" },
     params: [
       { key: "glueFlap", label: "Glue Flap Size", defaultValue: 10 },
       { key: "glueAngle", label: "Glue Flap Angle", defaultValue: 80 },
@@ -189,13 +150,7 @@ const templates: TemplateDef[] = [
     id: "polygonal-box",
     name: "Polygonal Box with Lid",
     description: "Polygon prism box with lid.",
-    dimensionLabels: {
-      a: "Inner Diameter",
-      b: "Number of Sides",
-      c: "Height",
-      d: "Lid Height",
-      e: "Clearance (%)",
-    },
+    dimensionLabels: { a: "Inner Diameter", b: "Number of Sides", c: "Height", d: "Lid Height", e: "Clearance (%)" },
     params: [
       { key: "glueFlap", label: "Glue Flap Size", defaultValue: 14 },
       { key: "glueAngle", label: "Glue Flap Angle", defaultValue: 80 },
@@ -205,12 +160,7 @@ const templates: TemplateDef[] = [
     id: "round-box",
     name: "Round Box",
     description: "Round hat-box style package.",
-    dimensionLabels: {
-      a: "Diameter",
-      b: "Height",
-      c: "Lid Height",
-      d: "Extra Offset for Caps",
-    },
+    dimensionLabels: { a: "Diameter", b: "Height", c: "Lid Height", d: "Extra Offset for Caps" },
     params: [
       { key: "clearance", label: "Clearance (%)", defaultValue: 3 },
       { key: "glueFlaps", label: "Number of Glue Flaps", defaultValue: 20 },
@@ -246,195 +196,123 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function EnvelopeReference({
-  fill,
-}: {
-  fill: string;
-}) {
+function EnvelopeReferenceCard({ fill }: { fill: string }) {
   return (
-    <div className="ref-card">
-      <div className="ref-photo">
-        <svg viewBox="0 0 420 300" className="ref-svg" role="img">
-          <rect width="420" height="300" fill="#efefef" />
-          <circle cx="36" cy="36" r="22" fill="#d9d9d9" />
-          <g transform="translate(40 50)">
-            <polygon points="0,92 128,0 256,92 256,212 0,212" fill="#cf1889" />
-            <polygon points="0,92 128,92 256,92 128,34" fill="#53d8ff" />
-            <polygon points="0,92 128,162 256,92 256,212 0,212" fill="none" stroke="#be167e" strokeWidth="1.5" opacity="0.28" />
+    <div className="reference-card">
+      <div className="reference-image">
+        <svg viewBox="0 0 440 310" className="reference-svg" role="img">
+          <rect width="440" height="310" fill="#f2f2f2" />
+          <circle cx="38" cy="38" r="24" fill="#d8d8d8" />
+          <g transform="translate(46 52)">
+            <polygon points="20,94 166,0 312,94 312,238 20,238" fill="#cf1987" />
+            <polygon points="20,94 166,94 312,94 166,38" fill="#5fe0ff" />
+            <path d="M20 238 L166 146 L312 238" fill="none" stroke="#c2167d" strokeWidth="2" opacity="0.28" />
           </g>
-          <g transform="translate(215 120)">
-            <rect x="0" y="0" width="145" height="110" rx="6" fill="#12b3eb" />
-            <polygon points="0,0 72.5,54 145,0" fill="#18bff6" />
-            <line x1="0" y1="110" x2="72.5" y2="54" stroke="#0e95c2" strokeWidth="2.3" opacity="0.6" />
-            <line x1="145" y1="110" x2="72.5" y2="54" stroke="#0e95c2" strokeWidth="2.3" opacity="0.6" />
-          </g>
-        </svg>
-      </div>
-
-      <div className="ref-diagram">
-        <svg viewBox="0 0 420 250" className="ref-svg" role="img">
-          <rect width="420" height="250" fill="#58aebe" />
-          <g transform="translate(28 20)">
-            <polygon points="0,135 120,95 270,140 115,205" fill="#9f7bc0" />
-            <polygon points="12,122 0,135 115,205 145,180" fill="#876698" />
-            <polygon points="120,95 150,79 292,126 270,140" fill="#b88ad4" />
-            <text x="124" y="42" fill="#ffffff" fontSize="20" fontWeight="700">Overlap</text>
-            <text x="0" y="165" fill="#ffffff" fontSize="20" fontWeight="700">Height</text>
-            <text x="149" y="192" fill="#ffffff" fontSize="20" fontWeight="700">Width</text>
-            <line x1="196" y1="54" x2="196" y2="85" stroke="#ffffff" strokeWidth="2.5" />
-            <line x1="188" y1="54" x2="204" y2="54" stroke="#ffffff" strokeWidth="2.5" />
-            <line x1="188" y1="85" x2="204" y2="85" stroke="#ffffff" strokeWidth="2.5" />
+          <g transform="translate(250 156)">
+            <rect x="0" y="0" width="142" height="110" rx="6" fill="#23aef0" />
+            <polygon points="0,0 71,54 142,0" fill="#34bbfa" />
+            <line x1="0" y1="110" x2="71" y2="54" stroke="#0e8fbe" strokeWidth="2.2" opacity="0.65" />
+            <line x1="142" y1="110" x2="71" y2="54" stroke="#0e8fbe" strokeWidth="2.2" opacity="0.65" />
           </g>
         </svg>
       </div>
 
-      <div className="ref-chip">
+      <div className="reference-diagram">
+        <svg viewBox="0 0 440 250" className="reference-svg" role="img">
+          <rect width="440" height="250" fill="#63aebe" />
+          <g transform="translate(38 26)">
+            <polygon points="0,132 116,92 300,144 142,214" fill="#a585c7" />
+            <polygon points="14,120 0,132 108,192 142,214 162,198 80,148" fill="#7d668d" />
+            <polygon points="116,92 146,76 334,132 300,144" fill="#c395df" />
+            <text x="146" y="42" fill="#ffffff" fontSize="22" fontWeight="700">Overlap</text>
+            <text x="0" y="170" fill="#ffffff" fontSize="22" fontWeight="700">Height</text>
+            <text x="196" y="206" fill="#ffffff" fontSize="22" fontWeight="700">Width</text>
+            <line x1="216" y1="54" x2="216" y2="84" stroke="#ffffff" strokeWidth="2.5" />
+            <line x1="208" y1="54" x2="224" y2="54" stroke="#ffffff" strokeWidth="2.5" />
+            <line x1="208" y1="84" x2="224" y2="84" stroke="#ffffff" strokeWidth="2.5" />
+          </g>
+        </svg>
+      </div>
+
+      <div className="reference-fill">
         <span>Preview fill</span>
-        <div className="ref-chip-color" style={{ background: fill }} />
+        <div className="reference-fill-box" style={{ background: fill }} />
       </div>
     </div>
   );
 }
 
-function EnvelopeWorkArea({
+function EnvelopeGeometry({
   width,
   height,
   overlap,
-  radius,
-  fill,
 }: {
   width: number;
   height: number;
   overlap: number;
-  radius: number;
-  fill: string;
 }) {
-  const W = clamp(width, 90, 260);
-  const H = clamp(height, 60, 180);
-  const O = clamp(overlap, 4, W * 0.12);
-  const R = clamp(radius, 0, 14);
+  const W = clamp(width, 100, 260);
+  const H = clamp(height, 70, 180);
+  const O = clamp(overlap, 6, W * 0.12);
 
-  const bodyX = 220;
-  const bodyY = 120;
-  const bodyW = W;
-  const bodyH = H;
+  const pageW = 980;
+  const pageH = 720;
 
-  const leftTop = { x: bodyX, y: bodyY };
-  const leftKink = { x: bodyX - H * 0.12, y: bodyY + bodyH * 0.6 };
-  const leftBottom = { x: bodyX - H * 0.34, y: bodyY + bodyH + H * 0.52 };
-  const leftBottomInner = { x: bodyX + O, y: bodyY + bodyH + H * 0.52 };
+  const cx = 505;
+  const cy = 360;
 
-  const bottomRightInner = { x: bodyX + bodyW - O, y: bodyY + bodyH + H * 0.52 };
-  const bottomRight = { x: bodyX + bodyW + H * 0.12, y: bodyY + bodyH + H * 0.52 };
+  const p1 = { x: cx - W * 0.52, y: cy - H * 0.10 };
+  const p2 = { x: cx - W * 0.22, y: cy - H * 0.68 };
+  const p3 = { x: cx + W * 0.18, y: cy - H * 0.68 };
+  const p4 = { x: cx + W * 0.58, y: cy - H * 0.34 };
+  const p5 = { x: cx + W * 0.44, y: cy + H * 0.08 };
+  const p6 = { x: cx + W * 0.22, y: cy + H * 0.70 };
+  const p7 = { x: cx - W * 0.20, y: cy + H * 0.70 };
+  const p8 = { x: cx - W * 0.56, y: cy + H * 0.36 };
+  const p9 = { x: cx - W * 0.72, y: cy + H * 0.06 };
+  const p10 = { x: cx - W * 0.58, y: cy - H * 0.20 };
 
-  const rightKink = { x: bodyX + bodyW + H * 0.22, y: bodyY + bodyH * 0.62 };
-  const rightTop = { x: bodyX + bodyW + H * 0.46, y: bodyY + H * 0.04 };
+  const blueA = { x: cx - W * 0.42, y: cy - H * 0.02 };
+  const blueB = { x: cx + W * 0.02, y: cy - H * 0.66 };
+  const blueC = { x: cx + W * 0.28, y: cy - H * 0.04 };
+  const blueD = { x: cx - W * 0.30, y: cy + H * 0.68 };
 
-  const topRightInner = { x: bodyX + bodyW - O, y: bodyY };
-  const topLeftInner = { x: bodyX + O, y: bodyY };
-
-  const guide1A = { x: bodyX, y: bodyY + bodyH * 0.58 };
-  const guide1B = { x: bodyX + bodyW * 0.72, y: bodyY };
-  const guide2A = { x: bodyX + bodyW * 0.16, y: bodyY + bodyH + H * 0.52 };
-  const guide2B = { x: bodyX + bodyW * 0.88, y: bodyY + bodyH * 0.6 };
-
-  const viewW = bodyX + bodyW + H * 0.75 + 120;
-  const viewH = bodyY + bodyH + H * 0.9 + 100;
+  const outerPath = `
+    M ${p1.x} ${p1.y}
+    L ${p2.x} ${p2.y}
+    Q ${p2.x + O * 0.2} ${p2.y - O * 0.8} ${p3.x} ${p3.y}
+    L ${p4.x} ${p4.y}
+    Q ${p4.x + O * 0.9} ${p4.y - O * 0.05} ${p5.x} ${p5.y}
+    L ${p6.x} ${p6.y}
+    Q ${p6.x - O * 0.2} ${p6.y + O * 0.8} ${p7.x} ${p7.y}
+    L ${p8.x} ${p8.y}
+    Q ${p8.x - O * 0.9} ${p8.y + O * 0.05} ${p9.x} ${p9.y}
+    L ${p10.x} ${p10.y}
+    Q ${p10.x - O * 0.2} ${p10.y - O * 0.8} ${p1.x} ${p1.y}
+  `;
 
   return (
-    <div className="workarea-card">
-      <svg viewBox={`0 0 ${viewW} ${viewH}`} className="workarea-svg" role="img">
-        <rect width={viewW} height={viewH} fill="#ffffff" />
-        <rect x="20" y="20" width={viewW - 40} height={viewH - 40} fill="none" stroke="#d4d4d4" />
-        <text x="44" y="46" fontSize="16" fill="#222">
+    <div className="geometry-card">
+      <svg viewBox={`0 0 ${pageW} ${pageH}`} className="geometry-svg" role="img">
+        <rect width={pageW} height={pageH} fill="#ffffff" />
+        <rect x="28" y="28" width={pageW - 56} height={pageH - 56} fill="none" stroke="#d5d5d5" />
+        <text x="62" y="72" fontSize="18" fill="#222">
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
         <path
-          d={`
-            M ${topLeftInner.x} ${topLeftInner.y}
-            L ${topRightInner.x} ${topRightInner.y}
-            Q ${bodyX + bodyW + O * 0.6} ${bodyY} ${rightTop.x} ${rightTop.y}
-            L ${rightKink.x} ${rightKink.y}
-            L ${bottomRight.x} ${bottomRight.y}
-            Q ${bodyX + bodyW + O * 0.3} ${bottomRight.y} ${bottomRightInner.x} ${bottomRightInner.y}
-            L ${leftBottomInner.x} ${leftBottomInner.y}
-            Q ${bodyX - O * 0.3} ${bottomRight.y} ${leftBottom.x} ${leftBottom.y}
-            L ${leftKink.x} ${leftKink.y}
-            L ${leftTop.x} ${leftTop.y}
-            Q ${bodyX + O * 0.3} ${bodyY} ${topLeftInner.x} ${topLeftInner.y}
-          `}
+          d={outerPath}
           fill="none"
           stroke="#ff1493"
-          strokeWidth="6"
+          strokeWidth="7"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
 
-        <path
-          d={`
-            M ${bodyX} ${bodyY + bodyH * 0.58}
-            L ${bodyX + bodyW * 0.72} ${bodyY}
-          `}
-          fill="none"
-          stroke="#27b0ff"
-          strokeWidth="3"
-        />
-
-        <path
-          d={`
-            M ${bodyX + bodyW * 0.16} ${bodyY + bodyH + H * 0.52}
-            L ${bodyX + bodyW * 0.88} ${bodyY + bodyH * 0.6}
-          `}
-          fill="none"
-          stroke="#27b0ff"
-          strokeWidth="3"
-        />
-
-        <path
-          d={`
-            M ${bodyX} ${bodyY + bodyH * 0.58}
-            L ${bodyX + bodyW * 0.16} ${bodyY + bodyH + H * 0.52}
-          `}
-          fill="none"
-          stroke="#27b0ff"
-          strokeWidth="3"
-        />
-
-        <path
-          d={`
-            M ${bodyX + bodyW * 0.72} ${bodyY}
-            L ${bodyX + bodyW * 0.88} ${bodyY + bodyH * 0.6}
-          `}
-          fill="none"
-          stroke="#27b0ff"
-          strokeWidth="3"
-        />
-
-        <path
-          d={`
-            M ${bodyX} ${bodyY + bodyH * 0.58}
-            L ${bodyX + bodyW * 0.72} ${bodyY}
-            L ${bodyX + bodyW * 0.88} ${bodyY + bodyH * 0.6}
-            L ${bodyX + bodyW * 0.16} ${bodyY + bodyH + H * 0.52}
-            Z
-          `}
-          fill={fill}
-          opacity="0.08"
-          stroke="none"
-        />
-
-        <rect
-          x={bodyX + bodyW * 0.08}
-          y={bodyY + bodyH * 0.18}
-          width={bodyW * 0.62}
-          height={bodyH * 0.36}
-          rx={R}
-          ry={R}
-          fill="none"
-          stroke="#27b0ff"
-          strokeWidth="0"
-        />
+        <line x1={blueA.x} y1={blueA.y} x2={blueB.x} y2={blueB.y} stroke="#38aefc" strokeWidth="3" />
+        <line x1={blueB.x} y1={blueB.y} x2={blueC.x} y2={blueC.y} stroke="#38aefc" strokeWidth="3" />
+        <line x1={blueC.x} y1={blueC.y} x2={blueD.x} y2={blueD.y} stroke="#38aefc" strokeWidth="3" />
+        <line x1={blueD.x} y1={blueD.y} x2={blueA.x} y2={blueA.y} stroke="#38aefc" strokeWidth="3" />
       </svg>
     </div>
   );
@@ -475,7 +353,7 @@ export default function App() {
   const [scale, setScale] = useState<ScaleMode>("1:6");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [exportMode, setExportMode] = useState<ExportMode>("print");
-  const [panelColor, setPanelColor] = useState<string>("#d6adc1");
+  const [panelColor, setPanelColor] = useState<string>("#d2a8bf");
 
   const [a, setA] = useState<number>(150);
   const [b, setB] = useState<number>(100);
@@ -530,12 +408,10 @@ export default function App() {
   const preview = useMemo(() => {
     if (templateId === "envelope") {
       return (
-        <EnvelopeWorkArea
+        <EnvelopeGeometry
           width={a}
           height={b}
           overlap={paramValues.overlap ?? 12.5}
-          radius={paramValues.radius ?? 7}
-          fill={panelColor}
         />
       );
     }
@@ -547,18 +423,7 @@ export default function App() {
         fill={panelColor}
       />
     );
-  }, [
-    templateId,
-    a,
-    b,
-    panelColor,
-    paramValues.overlap,
-    paramValues.radius,
-    activeTemplate.name,
-    scale,
-    pageSize,
-    exportMode,
-  ]);
+  }, [templateId, a, b, paramValues.overlap, activeTemplate.name, scale, pageSize, exportMode, panelColor]);
 
   return (
     <div className="app-shell">
@@ -590,7 +455,7 @@ export default function App() {
           {templateId === "envelope" && (
             <section className="panel">
               <h2>Reference</h2>
-              <EnvelopeReference fill={panelColor} />
+              <EnvelopeReferenceCard fill={panelColor} />
             </section>
           )}
 
