@@ -246,7 +246,47 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function EnvelopePreview({
+function EnvelopeReferenceBlock() {
+  return (
+    <div className="tm-reference">
+      <div className="tm-ref-photo">
+        <svg viewBox="0 0 420 320" className="tm-ref-svg" role="img">
+          <rect width="420" height="320" fill="#f4f4f4" />
+          <circle cx="42" cy="42" r="26" fill="#d7d7d7" opacity="0.8" />
+          <rect x="24" y="170" width="250" height="115" rx="10" fill="#c51d85" />
+          <polygon points="24,170 149,82 274,170" fill="#d22a90" />
+          <polygon points="40,176 145,176 149,176 254,176 149,106" fill="#42c8f5" />
+          <rect x="234" y="175" width="130" height="95" rx="8" fill="#14aee6" />
+          <polygon points="234,175 299,225 364,175" fill="#1bb5ed" />
+          <path d="M234 175 L299 225 L364 175" fill="none" stroke="#0d89b4" strokeWidth="3" />
+        </svg>
+      </div>
+
+      <div className="tm-ref-diagram">
+        <svg viewBox="0 0 420 255" className="tm-ref-svg" role="img">
+          <rect width="420" height="255" fill="#59b2c0" />
+          <polygon points="120,165 260,95 345,155 172,222" fill="#a57cc2" opacity="0.92" />
+          <polygon points="52,140 120,165 172,222 101,214" fill="#8b668f" opacity="0.95" />
+          <polygon points="120,165 260,95 259,113 139,174" fill="#b78bd1" />
+          <text x="84" y="69" fill="#ffffff" fontSize="16" fontWeight="700">
+            Overlap
+          </text>
+          <text x="26" y="213" fill="#ffffff" fontSize="18" fontWeight="700">
+            Height
+          </text>
+          <text x="147" y="220" fill="#ffffff" fontSize="20" fontWeight="700">
+            Width
+          </text>
+          <line x1="100" y1="82" x2="100" y2="114" stroke="#ffffff" strokeWidth="2" />
+          <line x1="90" y1="82" x2="110" y2="82" stroke="#ffffff" strokeWidth="2" />
+          <line x1="90" y1="114" x2="110" y2="114" stroke="#ffffff" strokeWidth="2" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function EnvelopeDieline({
   width,
   height,
   overlap,
@@ -264,88 +304,73 @@ function EnvelopePreview({
   const O = clamp(overlap, 6, W * 0.12);
   const R = clamp(radius, 0, 14);
 
-  const margin = 36;
-  const sideDepth = W * 0.22;
-  const topDepth = H * 0.48;
-  const bottomDepth = H * 0.34;
-
-  const bodyX = margin + sideDepth;
-  const bodyY = margin + topDepth;
+  const bodyX = 155;
+  const bodyY = 88;
   const bodyW = W;
   const bodyH = H;
 
-  const leftTopX = bodyX;
-  const leftTopY = bodyY;
-  const leftMidX = bodyX - sideDepth;
-  const leftMidY = bodyY + bodyH / 2;
-  const leftBottomX = bodyX;
-  const leftBottomY = bodyY + bodyH;
+  const leftA = { x: bodyX, y: bodyY };
+  const leftB = { x: bodyX - H * 0.36, y: bodyY + bodyH / 2 };
+  const leftC = { x: bodyX, y: bodyY + bodyH };
 
-  const rightTopX = bodyX + bodyW;
-  const rightTopY = bodyY;
-  const rightMidX = bodyX + bodyW + sideDepth;
-  const rightMidY = bodyY + bodyH / 2;
-  const rightBottomX = bodyX + bodyW;
-  const rightBottomY = bodyY + bodyH;
+  const rightA = { x: bodyX + bodyW, y: bodyY };
+  const rightB = { x: bodyX + bodyW + H * 0.36, y: bodyY + bodyH / 2 };
+  const rightC = { x: bodyX + bodyW, y: bodyY + bodyH };
 
-  const topLeftX = bodyX;
-  const topLeftY = bodyY;
-  const topPeakX = bodyX + bodyW / 2;
-  const topPeakY = bodyY - topDepth;
-  const topRightX = bodyX + bodyW;
-  const topRightY = bodyY;
+  const topA = { x: bodyX + O, y: bodyY };
+  const topB = { x: bodyX + bodyW / 2, y: bodyY - H * 0.48 };
+  const topC = { x: bodyX + bodyW - O, y: bodyY };
 
-  const bottomLeftX = bodyX;
-  const bottomLeftY = bodyY + bodyH;
-  const bottomPeakX = bodyX + bodyW / 2;
-  const bottomPeakY = bodyY + bodyH + bottomDepth;
-  const bottomRightX = bodyX + bodyW;
-  const bottomRightY = bodyY + bodyH;
+  const bottomA = { x: bodyX + O, y: bodyY + bodyH };
+  const bottomB = { x: bodyX + bodyW / 2, y: bodyY + bodyH + H * 0.34 };
+  const bottomC = { x: bodyX + bodyW - O, y: bodyY + bodyH };
 
-  const viewWidth = bodyX + bodyW + sideDepth + margin;
-  const viewHeight = bodyY + bodyH + bottomDepth + margin;
+  const viewW = bodyX + bodyW + H * 0.5 + 80;
+  const viewH = bodyY + bodyH + H * 0.46 + 70;
 
   return (
-    <div className="preview-card">
-      <svg
-        viewBox={`0 0 ${viewWidth} ${viewHeight}`}
-        className="preview-svg"
-        role="img"
-      >
-        <rect x="0" y="0" width={viewWidth} height={viewHeight} fill="#ffffff" />
+    <div className="tm-dieline-wrap">
+      <svg viewBox={`0 0 ${viewW} ${viewH}`} className="tm-dieline-svg" role="img">
+        <rect width={viewW} height={viewH} fill="#ffffff" />
+        <rect x="12" y="12" width={viewW - 24} height={viewH - 24} fill="none" stroke="#d4d4d4" />
+        <text x="26" y="34" fontSize="12" fill="#222">
+          Envelope {Math.round(width)}×{Math.round(height)} (mm)
+        </text>
 
-        <polygon
-          points={`${leftTopX},${leftTopY} ${leftMidX},${leftMidY} ${leftBottomX},${leftBottomY}`}
-          fill={fill}
+        <path
+          d={`M ${topA.x} ${topA.y} L ${topB.x} ${topB.y} L ${topC.x} ${topC.y}`}
+          fill="none"
           stroke="#ff1493"
-          strokeWidth="2.5"
+          strokeWidth="4"
+          strokeLinejoin="round"
+          strokeLinecap="round"
         />
 
-        <polygon
-          points={`${rightTopX},${rightTopY} ${rightMidX},${rightMidY} ${rightBottomX},${rightBottomY}`}
-          fill={fill}
+        <path
+          d={`M ${leftA.x} ${leftA.y} L ${leftB.x} ${leftB.y} L ${leftC.x} ${leftC.y}`}
+          fill="none"
           stroke="#ff1493"
-          strokeWidth="2.5"
+          strokeWidth="4"
+          strokeLinejoin="round"
+          strokeLinecap="round"
         />
 
-        <polygon
-          points={`
-            ${topLeftX},${topLeftY}
-            ${bodyX + O},${bodyY}
-            ${topPeakX},${topPeakY}
-            ${bodyX + bodyW - O},${bodyY}
-            ${topRightX},${topRightY}
-          `}
-          fill={fill}
+        <path
+          d={`M ${rightA.x} ${rightA.y} L ${rightB.x} ${rightB.y} L ${rightC.x} ${rightC.y}`}
+          fill="none"
           stroke="#ff1493"
-          strokeWidth="2.5"
+          strokeWidth="4"
+          strokeLinejoin="round"
+          strokeLinecap="round"
         />
 
-        <polygon
-          points={`${bottomLeftX},${bottomLeftY} ${bottomPeakX},${bottomPeakY} ${bottomRightX},${bottomRightY}`}
-          fill={fill}
+        <path
+          d={`M ${bottomA.x} ${bottomA.y} L ${bottomB.x} ${bottomB.y} L ${bottomC.x} ${bottomC.y}`}
+          fill="none"
           stroke="#ff1493"
-          strokeWidth="2.5"
+          strokeWidth="4"
+          strokeLinejoin="round"
+          strokeLinecap="round"
         />
 
         <rect
@@ -355,108 +380,102 @@ function EnvelopePreview({
           height={bodyH}
           rx={R}
           ry={R}
-          fill={fill}
-          stroke="#ff1493"
-          strokeWidth="2.5"
+          fill="none"
+          stroke="#3ab0ff"
+          strokeWidth="2"
         />
 
         <line
-          x1={leftTopX}
-          y1={leftTopY}
-          x2={leftMidX}
-          y2={leftMidY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
+          x1={leftB.x}
+          y1={leftB.y}
+          x2={bodyX + bodyW}
+          y2={bodyY}
+          stroke="#3ab0ff"
+          strokeWidth="2"
         />
         <line
-          x1={leftBottomX}
-          y1={leftBottomY}
-          x2={leftMidX}
-          y2={leftMidY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
+          x1={leftB.x}
+          y1={leftB.y}
+          x2={bodyX + bodyW * 0.46}
+          y2={bodyY + bodyH}
+          stroke="#3ab0ff"
+          strokeWidth="2"
         />
-
-        <line
-          x1={rightTopX}
-          y1={rightTopY}
-          x2={rightMidX}
-          y2={rightMidY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
-        />
-        <line
-          x1={rightBottomX}
-          y1={rightBottomY}
-          x2={rightMidX}
-          y2={rightMidY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
-        />
-
-        <line
-          x1={topLeftX}
-          y1={topLeftY}
-          x2={topPeakX}
-          y2={topPeakY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
-        />
-        <line
-          x1={topRightX}
-          y1={topRightY}
-          x2={topPeakX}
-          y2={topPeakY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
-        />
-
-        <line
-          x1={bottomLeftX}
-          y1={bottomLeftY}
-          x2={bottomPeakX}
-          y2={bottomPeakY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
-        />
-        <line
-          x1={bottomRightX}
-          y1={bottomRightY}
-          x2={bottomPeakX}
-          y2={bottomPeakY}
-          stroke="#36a3ff"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
-        />
-
         <line
           x1={bodyX}
-          y1={bodyY}
-          x2={bodyX + bodyW}
+          y1={bodyY + bodyH}
+          x2={bodyX + bodyW * 0.46}
           y2={bodyY + bodyH}
-          stroke="#36a3ff"
-          strokeWidth="1.2"
+          stroke="#3ab0ff"
+          strokeWidth="2"
         />
-        <line
-          x1={bodyX + bodyW}
-          y1={bodyY}
-          x2={bodyX}
-          y2={bodyY + bodyH}
-          stroke="#36a3ff"
-          strokeWidth="1.2"
-        />
-
-        <text x="20" y="24" fontSize="15" fill="#111">
-          Envelope dieline preview
-        </text>
       </svg>
+    </div>
+  );
+}
+
+function EnvelopeStudio({
+  width,
+  height,
+  overlap,
+  radius,
+  fill,
+}: {
+  width: number;
+  height: number;
+  overlap: number;
+  radius: number;
+  fill: string;
+}) {
+  return (
+    <div className="tm-studio">
+      <div className="tm-col tm-left">
+        <h3 className="tm-title-big">ENVELOPE</h3>
+        <EnvelopeReferenceBlock />
+      </div>
+
+      <div className="tm-col tm-middle">
+        <div className="tm-section">
+          <h4 className="tm-section-title">Dimensions</h4>
+          <div className="tm-options-row">
+            <label><input type="radio" checked readOnly /> mm</label>
+            <label><input type="radio" readOnly /> cm</label>
+            <label><input type="radio" readOnly /> inch</label>
+          </div>
+
+          <div className="tm-field"><span>Width</span><div className="tm-value">{width}</div></div>
+          <div className="tm-field"><span>Height</span><div className="tm-value">{height}</div></div>
+        </div>
+
+        <div className="tm-section">
+          <h4 className="tm-section-title">Optional parameters</h4>
+          <div className="tm-field"><span>Overlap</span><div className="tm-value">{overlap}</div></div>
+          <div className="tm-field"><span>Rounded Corners Radius</span><div className="tm-value">{radius}</div></div>
+        </div>
+
+        <div className="tm-section">
+          <h4 className="tm-section-title">Document Options</h4>
+          <div className="tm-field"><span>Margin</span><div className="tm-value">25</div></div>
+          <div className="tm-field"><span>Page Size</span><div className="tm-value">Fit page to drawing</div></div>
+          <div className="tm-field"><span>Resolution</span><div className="tm-value">72</div></div>
+          <div className="tm-field"><span>Perforate folds</span><div className="tm-value">5 / 1</div></div>
+        </div>
+
+        <div className="tm-fill-chip">
+          <span>Current fill</span>
+          <div className="tm-fill-color" style={{ background: fill }} />
+        </div>
+      </div>
+
+      <div className="tm-col tm-right">
+        <EnvelopeDieline
+          width={width}
+          height={height}
+          overlap={overlap}
+          radius={radius}
+          fill={fill}
+        />
+      </div>
     </div>
   );
 }
@@ -496,7 +515,7 @@ export default function App() {
   const [scale, setScale] = useState<ScaleMode>("1:6");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [exportMode, setExportMode] = useState<ExportMode>("print");
-  const [panelColor, setPanelColor] = useState<string>("#f5c1d6");
+  const [panelColor, setPanelColor] = useState<string>("#e0b0c6");
 
   const [a, setA] = useState<number>(80);
   const [b, setB] = useState<number>(50);
@@ -531,13 +550,14 @@ export default function App() {
       setC(0);
       setD(0);
       setE(0);
-    } else {
-      setA(80);
-      setB(50);
-      setC(150);
-      setD(20);
-      setE(15);
+      return;
     }
+
+    setA(80);
+    setB(50);
+    setC(150);
+    setD(20);
+    setE(15);
   }
 
   function updateParam(key: string, value: number) {
@@ -550,7 +570,7 @@ export default function App() {
   const preview = useMemo(() => {
     if (templateId === "envelope") {
       return (
-        <EnvelopePreview
+        <EnvelopeStudio
           width={a}
           height={b}
           overlap={paramValues.overlap ?? 12.5}
@@ -709,28 +729,6 @@ export default function App() {
             <h2>Live preview</h2>
             {preview}
           </section>
-
-          <section className="panel">
-            <h2>Project summary</h2>
-            <div className="summary-grid">
-              <div>
-                <span className="summary-label">Template</span>
-                <strong>{activeTemplate.name}</strong>
-              </div>
-              <div>
-                <span className="summary-label">Scale</span>
-                <strong>{scale}</strong>
-              </div>
-              <div>
-                <span className="summary-label">Page size</span>
-                <strong>{pageSize}</strong>
-              </div>
-              <div>
-                <span className="summary-label">Export mode</span>
-                <strong>{exportMode === "print" ? "Print" : "Cricut"}</strong>
-              </div>
-            </div>
-          </section>
         </section>
 
         <aside className="sidebar right">
@@ -814,17 +812,6 @@ export default function App() {
                 Vector artwork only. Raster files and patterns are excluded from Cricut SVG export.
               </p>
             )}
-          </section>
-
-          <section className="panel">
-            <h2>Next features</h2>
-            <ul className="feature-list">
-              <li>SVG geometry per template</li>
-              <li>Panel-by-panel artwork upload</li>
-              <li>Move / resize / rotate</li>
-              <li>Duplicate to another panel</li>
-              <li>PDF / PNG / JPG / SVG export</li>
-            </ul>
           </section>
         </aside>
       </main>
