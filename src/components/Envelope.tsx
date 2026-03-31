@@ -2,178 +2,161 @@ import React from "react";
 
 type Pt = { x: number; y: number };
 
-function pt(x: number, y: number): Pt {
-  return { x, y };
-}
-
-function add(a: Pt, b: Pt): Pt {
-  return { x: a.x + b.x, y: a.y + b.y };
-}
-
-function sub(a: Pt, b: Pt): Pt {
-  return { x: a.x - b.x, y: a.y - b.y };
-}
-
-function mul(v: Pt, k: number): Pt {
-  return { x: v.x * k, y: v.y * k };
-}
-
-function len(v: Pt): number {
-  return Math.hypot(v.x, v.y);
-}
-
-function normalize(v: Pt): Pt {
-  const l = len(v) || 1;
-  return { x: v.x / l, y: v.y / l };
-}
-
-function perp(v: Pt): Pt {
-  return { x: -v.y, y: v.x };
-}
-
-function dot(a: Pt, b: Pt): number {
-  return a.x * b.x + a.y * b.y;
-}
-
-function line(a: Pt, b: Pt) {
-  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
-}
-
-function polyline(points: Pt[]) {
-  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+interface EnvelopeProps {
+  width: number;    // real mm
+  height: number;   // real mm
+  overlap: number;  // real mm
+  radius: number;   // real mm
+  scale: number;    // 6 or 12
+  color: string;
 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-interface Props {
-  width: number;    // real mm
-  height: number;   // real mm
-  overlap: number;  // real mm
-  scale: number;    // 6 or 12
-  color: string;
+function pt(x: number, y: number): Pt {
+  return { x, y };
 }
 
-export const Envelope: React.FC<Props> = ({
+function line(a: Pt, b: Pt) {
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+}
+
+export const Envelope: React.FC<EnvelopeProps> = ({
   width,
   height,
   overlap,
+  radius,
   scale,
   color,
 }) => {
-  // Geometry is built directly in miniature size
+  // Build geometry directly in miniature mm
   const k = 1 / scale;
 
-  const W = clamp(width * k, 4, 260);
-  const H = clamp(height * k, 4, 180);
-  const O = clamp(overlap * k, 0, 30);
+  const w = clamp(width * k, 2, 300);
+  const h = clamp(height * k, 2, 300);
+  const o = clamp(overlap * k, 0, 100);
+  const r = clamp(radius * k, 0, Math.min(w, h) * 0.2);
 
-  // Reference screenshot proportions from the restored working version
-  // 150x100 real @ 1:6 => 25 x 16.667 miniature reference
-  const refW = 150 / 6;
-  const refH = 100 / 6;
+  // Central panel
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const y0 = -h / 2;
+  const y1 = h / 2;
 
-  const minX = 231;
-  const minY = 279;
-  const maxX = 1020;
-  const maxY = 931;
+  // Envelope flap logic
+  // Top flap is the main closing flap
+  const topFlapDepth = h * 0.58 + o;
+  const bottomFlapDepth = h * 0.42;
+  const sideFlapDepth = h * 0.48;
 
-  const sx = W / refW;
-  const sy = H / refH;
+  const topTip = pt(0, y0 - topFlapDepth);
+  const bottomTip = pt(0, y1 + bottomFlapDepth);
+  const leftTip = pt(x0 - sideFlapDepth, 0);
+  const rightTip = pt(x1 + sideFlapDepth, 0);
 
-  const offsetX = 180;
-  const offsetY = 140;
+  // Slight inset on the base of top/bottom flaps for a cleaner envelope look
+  const topInset = Math.min(w * 0.16, o + w * 0.05);
+  const bottomInset = Math.min(w * 0.12, w * 0.12);
 
-  function map(x: number, y: number): Pt {
-    return pt((x - minX) * sx + offsetX, (y - minY) * sy + offsetY);
-  }
+  const topLeftBase = pt(x0 + topInset, y0);
+  const topRightBase = pt(x1 - topInset, y0);
+  const bottomLeftBase = pt(x0 + bottomInset, y1);
+  const bottomRightBase = pt(x1 - bottomInset, y1);
 
-  // Pink contour kept exactly from restored base
-  const outer = [
-    map(231, 893),
-    map(320, 608),
-    map(293, 570),
-    map(409, 279),
-    map(728, 279),
-    map(757, 321),
-    map(1020, 321),
-    map(948, 607),
-    map(974, 645),
-    map(839, 931),
-    map(535, 931),
-    map(509, 893),
-  ];
+  // Outer cut contour
+  const cutPath = `
+    M ${topLeftBase.x} ${topLeftBase.y}
+    L ${topTip.x} ${topTip.y}
+    L ${topRightBase.x} ${topRightBase.y}
+    L ${x1} ${y0}
+    L ${rightTip.x} ${rightTip.y}
+    L ${x1} ${y1}
+    L ${bottomRightBase.x} ${bottomRightBase.y}
+    L ${bottomTip.x} ${bottomTip.y}
+    L ${bottomLeftBase.x} ${bottomLeftBase.y}
+    L ${x0} ${y1}
+    L ${leftTip.x} ${leftTip.y}
+    L ${x0} ${y0}
+    Z
+  `;
 
-  // Reference blue points from restored base
-  const rawLeft = map(320, 608);
-  const rawTop = map(757, 321);
-  const rawRight = map(948, 607);
+  // Fold lines:
+  // 1. central rectangle
+  // 2. diagonals from panel corners to flap tips
+  const foldPath = `
+    ${line(pt(x0, y0), pt(x1, y0))}
+    ${line(pt(x1, y0), pt(x1, y1))}
+    ${line(pt(x1, y1), pt(x0, y1))}
+    ${line(pt(x0, y1), pt(x0, y0))}
 
-  // Long side direction
-  const ux = normalize(sub(rawTop, rawLeft));
+    ${line(pt(x0, y0), leftTip)}
+    ${line(pt(x0, y1), leftTip)}
 
-  // Perpendicular direction -> guarantees 90° angles
-  let uy = normalize(perp(ux));
+    ${line(pt(x1, y0), rightTip)}
+    ${line(pt(x1, y1), rightTip)}
 
-  // Keep rectangle on the same side as the old geometry
-  const testHeight = dot(sub(rawRight, rawTop), uy);
-  if (testHeight < 0) {
-    uy = mul(uy, -1);
-  }
+    ${line(topLeftBase, topTip)}
+    ${line(topRightBase, topTip)}
 
-  const rectWidth = len(sub(rawTop, rawLeft));
-  const rectHeight = Math.abs(dot(sub(rawRight, rawTop), uy));
+    ${line(bottomLeftBase, bottomTip)}
+    ${line(bottomRightBase, bottomTip)}
+  `;
 
-  // Overlap may shift the rectangle slightly, but must not distort angles
-  const overlapShift = (O - 12.5 * k) * 2.0;
-  const shift = mul(ux, -overlapShift * 0.35);
+  // Optional visible blue panel fill
+  const panelFillPath = `
+    M ${x0} ${y0}
+    L ${x1} ${y0}
+    L ${x1} ${y1}
+    L ${x0} ${y1}
+    Z
+  `;
 
-  const tl = add(rawLeft, shift);
-  const tr = add(rawTop, shift);
-  const br = add(tr, mul(uy, rectHeight));
-  const bl = add(tl, mul(uy, rectHeight));
-
-  const viewW = (maxX - minX) * sx + 360;
-  const viewH = (maxY - minY) * sy + 280;
+  // Dynamic viewBox
+  const margin = Math.max(w, h) * 0.9;
+  const vbX = leftTip.x - margin * 0.35;
+  const vbY = topTip.y - margin * 0.35;
+  const vbW = rightTip.x - leftTip.x + margin * 0.7;
+  const vbH = bottomTip.y - topTip.y + margin * 0.7;
 
   return (
-    <svg viewBox={`0 0 ${viewW} ${viewH}`} className="w-full h-auto">
-      <rect width={viewW} height={viewH} fill="#ffffff" />
+    <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} className="w-full h-auto">
+      {/* editable / design zone */}
+      <path d={panelFillPath} fill={color} fillOpacity="0.18" />
+
+      {/* optional rounded-corner visual hint for panel */}
       <rect
-        x="28"
-        y="28"
-        width={viewW - 56}
-        height={viewH - 56}
+        x={x0}
+        y={y0}
+        width={w}
+        height={h}
+        rx={r}
+        ry={r}
         fill="none"
-        stroke="#d9d4cc"
+        stroke="#38AEFC"
+        strokeWidth="0.7"
+        strokeDasharray="2,2"
       />
 
-      <text x="62" y="72" fontSize="16" fill="#222">
-        Envelope mini template · {W.toFixed(2)} × {H.toFixed(2)} mm
-      </text>
-
+      {/* fold lines */}
       <path
-        d={`${polyline([...outer, outer[0]])} Z`}
-        fill={color}
-        fillOpacity="0.05"
-        stroke="none"
+        d={foldPath}
+        fill="none"
+        stroke="#38AEFC"
+        strokeWidth="0.7"
+        strokeDasharray="2,2"
       />
 
+      {/* cut line */}
       <path
-        d={`${polyline([...outer, outer[0]])} Z`}
+        d={cutPath}
         fill="none"
-        stroke="#ff1493"
-        strokeWidth="7"
+        stroke="#FF1493"
+        strokeWidth="1.1"
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-
-      {/* Blue zone = true rectangle, always 90° */}
-      <path d={line(tl, tr)} fill="none" stroke="#38aefc" strokeWidth="3" />
-      <path d={line(tr, br)} fill="none" stroke="#38aefc" strokeWidth="3" />
-      <path d={line(br, bl)} fill="none" stroke="#38aefc" strokeWidth="3" />
-      <path d={line(bl, tl)} fill="none" stroke="#38aefc" strokeWidth="3" />
     </svg>
   );
 };
