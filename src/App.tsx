@@ -47,41 +47,37 @@ function EnvelopeGeometry({
   const pageW = 980;
   const pageH = 720;
 
-  // inner tilted panel, closer to screenshot proportions
-  const innerTL = pt(420, 315);
-  const innerTR = pt(560, 235);
-  const innerBR = pt(605, 335);
-  const innerBL = pt(445, 455);
+  const cx = 505;
+  const cy = 360;
 
-  // outer contour, hand-tuned to resemble the reference screenshot
-  const a = pt(355, 445);
-  const b = pt(300, 335);
-  const c = pt(360, 190);
-  const d = pt(520, 190);
-  const e = pt(585, 235);
-  const f = pt(705, 235);
-  const g = pt(800, 235);
-  const h = pt(860, 285);
-  const i = pt(812, 410);
-  const j = pt(748, 490);
-  const k = pt(672, 590);
-  const l = pt(430, 590);
-  const m = pt(355, 495);
+  const p1 = { x: cx - W * 0.52, y: cy - H * 0.10 };
+  const p2 = { x: cx - W * 0.22, y: cy - H * 0.68 };
+  const p3 = { x: cx + W * 0.18, y: cy - H * 0.68 };
+  const p4 = { x: cx + W * 0.58, y: cy - H * 0.34 };
+  const p5 = { x: cx + W * 0.44, y: cy + H * 0.08 };
+  const p6 = { x: cx + W * 0.22, y: cy + H * 0.70 };
+  const p7 = { x: cx - W * 0.20, y: cy + H * 0.70 };
+  const p8 = { x: cx - W * 0.56, y: cy + H * 0.36 };
+  const p9 = { x: cx - W * 0.72, y: cy + H * 0.06 };
+  const p10 = { x: cx - W * 0.58, y: cy - H * 0.20 };
+
+  const blueA = { x: cx - W * 0.42, y: cy - H * 0.02 };
+  const blueB = { x: cx + W * 0.02, y: cy - H * 0.66 };
+  const blueC = { x: cx + W * 0.28, y: cy - H * 0.04 };
+  const blueD = { x: cx - W * 0.30, y: cy + H * 0.68 };
 
   const outerPath = `
-    M ${a.x} ${a.y}
-    L ${b.x} ${b.y}
-    Q ${b.x - R * 0.6} ${b.y - R * 0.4} ${c.x} ${c.y}
-    Q ${c.x + R * 0.4} ${c.y - R * 0.2} ${d.x} ${d.y}
-    L ${e.x} ${e.y}
-    L ${g.x} ${g.y}
-    Q ${g.x + R * 1.4} ${g.y} ${h.x} ${h.y}
-    L ${i.x} ${i.y}
-    L ${j.x} ${j.y}
-    Q ${j.x - R * 0.5} ${j.y + R * 0.8} ${k.x} ${k.y}
-    Q ${k.x - R * 0.6} ${k.y} ${l.x} ${l.y}
-    L ${m.x} ${m.y}
-    L ${a.x} ${a.y}
+    M ${p1.x} ${p1.y}
+    L ${p2.x} ${p2.y}
+    Q ${p2.x + R * 0.2} ${p2.y - R * 0.8} ${p3.x} ${p3.y}
+    L ${p4.x} ${p4.y}
+    Q ${p4.x + R * 1.0} ${p4.y} ${p5.x} ${p5.y}
+    L ${p6.x} ${p6.y}
+    Q ${p6.x - R * 0.2} ${p6.y + R * 0.8} ${p7.x} ${p7.y}
+    L ${p8.x} ${p8.y}
+    Q ${p8.x - R * 1.0} ${p8.y} ${p9.x} ${p9.y}
+    L ${p10.x} ${p10.y}
+    Q ${p10.x - R * 0.2} ${p10.y - R * 0.8} ${p1.x} ${p1.y}
   `;
 
   return (
@@ -93,30 +89,20 @@ function EnvelopeGeometry({
           Envelope {Math.round(width)}×{Math.round(height)} (mm)
         </text>
 
-        {/* subtle fill only to show editable area */}
-        <path d={outerPath} fill={fill} fillOpacity="0.06" stroke="none" />
-
-        {/* cut line */}
         <path
           d={outerPath}
-          fill="none"
+          fill={fill}
+          fillOpacity="0.06"
           stroke="#ff1493"
           strokeWidth="7"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
 
-        {/* fold lines / inner panel */}
-        <path d={line(innerTL, innerTR)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(innerTR, innerBR)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(innerBR, innerBL)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(innerBL, innerTL)} fill="none" stroke="#38aefc" strokeWidth="3" />
-
-        {/* diagonals to side flaps */}
-        <path d={line(b, innerTL)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(m, innerBL)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(e, innerTR)} fill="none" stroke="#38aefc" strokeWidth="3" />
-        <path d={line(i, innerBR)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(blueA, blueB)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(blueB, blueC)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(blueC, blueD)} fill="none" stroke="#38aefc" strokeWidth="3" />
+        <path d={line(blueD, blueA)} fill="none" stroke="#38aefc" strokeWidth="3" />
       </svg>
     </div>
   );
